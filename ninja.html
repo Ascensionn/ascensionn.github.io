@@ -1,0 +1,89 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Stealth</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<a href="index.html" class="title">Andy He</a>
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						<li><a href="index.html#one" class="active">Project</a></li>
+						<!-- <li><a href="elements.html">Elements</a></li> -->
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+							<h1 class="major">Stealth</h1>
+							<span class="image fit"><img src="images/stealth.gif" alt="" /></span>
+							<p> <b>"Stealth"</b> is an engaging <b>2D platformer</b> that is a mix of <b>action</b>, <b>movement precision</b>, and <b>strategic 
+								enemy encounters</b> within a dynamic environment. In this project, I explored how to create a <b>fluid</b> and <b>immersive</b> gameplay 
+								experience that challenges players while maintaining fairness 
+								and responsiveness. I achieved this by implementing core mechanics such as <b>enemy AI</b>, <b>dynamic platforming</b>, <b>player 
+								detection systems</b>, <b>animations</b>, and <b>environmental interactions</b>.
+								<br>
+								<br>
+								One of the central mechanics I introduced is <b>enemy logic</b>, where enemies not only patrol the environment but also dynamically 
+								respond to player presence. They can detect the player using <b>raycasts</b> and alter their movement patterns accordingly.
+								<br>
+								<br>
+								The <b>enemies</b> in my game serve as dynamic obstacles that challenge the <b>player’s movement</b>, <b>timing</b>, and <b>strategy</b>. 
+								Each enemy has unique behaviors that force the player to adapt and interact with them in different ways.
+								<ul>
+									<li>
+										The Camera Enemy is a stationary but
+										dangerous foe that continuously scans its surroundings. It rotates within a limited angle 
+										range and, upon detecting the player, stops moving and begins firing projectiles with 
+										rapid precision. To avoid being spotted, the player must utilize movement strategies such 
+										as jumping, hiding, or using invisibility to slip past undetected.
+									</li>
+
+									<li>
+										The Red Ninjas are the most aggressive and relentless enemies in the game. 
+										They <b>patrol platforms</b>, detect the player from a distance, and chase with 
+										increased speed. Once they engage, they swiftly close the distance and 
+										strike with fast melee attacks. Their design includes edge detection to 
+										prevent them from falling off platforms, and they react dynamically to the 
+										player's position. When spotted, the player has to decide between 
+										fighting back, outmaneuvering them, or using invisibility to escape.
+									</li>
+									
+								</ul>
+								
+								</p>
+							<button onclick="window.location.href='https://ascensionn.itch.io/stealth'">Play the game here!</button>
+							<p></p>
+							<p><b>Technical Skills</b>: Unity, C#</p>
+
+						
+						</div>
+					</section>
+
+			</div>
+
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
