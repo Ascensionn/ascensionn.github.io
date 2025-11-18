@@ -3974,3 +3974,71 @@ input, select, textarea {
 			}
 
 		}
+/* === MONOTONE DARK THEME – HARD OVERRIDES === */
+
+body {
+    background-color: #1d1f23;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.wrapper,
+.wrapper.alt,
+.wrapper.style1,
+.wrapper.style1-alt,
+.wrapper.style2,
+.wrapper.style2-alt,
+.wrapper.style3,
+.wrapper.style3-alt {
+    background-color: #111111 !important;
+}
+
+#header,
+#sidebar {
+    background: #111111 !important;
+}
+
+#sidebar nav a:before {
+    background: #1b1b1b !important;
+}
+
+#sidebar nav a:after {
+    background-image: none !important;
+    background-color: #555555 !important;
+}
+
+#intro {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+.features {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.contactModified li {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+h1.major:after {
+    background-image: none !important;
+    background-color: #555555 !important;
+}
+
+.spotlights > section:nth-child(2),
+.spotlights > section:nth-child(3) {
+    background-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+.icon.major {
+    background: #e0e0e0 !important;
+    color: #111111 !important;
+}
+
+.wrapper.style1 .icon.major:before,
+.wrapper.style1-alt .icon.major:before,
+.wrapper.style2 .icon.major:before,
+.wrapper.style2-alt .icon.major:before,
+.wrapper.style3 .icon.major:before,
+.wrapper.style3-alt .icon.major:before {
+    color: #111111 !important;
+}
