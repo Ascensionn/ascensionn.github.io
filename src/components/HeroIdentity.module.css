@@ -90,7 +90,22 @@
   transform: translateY(calc(var(--lead) * 0.09)) scale(0.975);
   transition:
     opacity 0.55s var(--ease-out),
-    transform 0.8s var(--ease-out);
+    transform 0.8s var(--ease-out),
+    filter 0.45s var(--ease-out);
+}
+
+/* The block above is pointer-events: none so the ASCII field keeps the pointer; the portrait
+   takes it back, and only for itself, so it can answer a hover. */
+.portrait {
+  pointer-events: auto;
+}
+
+/* Colour arrives on hover or focus, the same as the About figure. Not gated behind
+   (hover: hover): a tap on a phone holds :active for as long as the finger is down. */
+.portrait:hover,
+.portrait:focus-within,
+.portrait:active {
+  filter: none;
 }
 
 .portrait img {

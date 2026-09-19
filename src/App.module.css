@@ -8,6 +8,9 @@
 .page {
   padding: var(--inset);
   padding-inline: max(var(--inset), env(safe-area-inset-left)) max(var(--inset), env(safe-area-inset-right));
+  /* The floating bar is up for the whole page past the hero, so the document ends a lane above
+     the bottom edge: the footer's colophon scrolls clear of the bar instead of under it. */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 .main:focus {

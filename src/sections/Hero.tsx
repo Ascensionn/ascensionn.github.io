@@ -140,9 +140,6 @@ export function Hero({ ref, intro, theme, onToggleTheme, menuOpen, onOpenMenu }:
 
       <div ref={footRef} className={`label ${styles.foot}`}>
         <div className={styles.footRow}>
-          <p className={styles.role}>
-            <span className={`${pill.pill} ${pill.static}`}>{person.role}</span>
-          </p>
           <p className={styles.location}>
             <span className={`${pill.pill} ${pill.static}`}>{person.location}</span>
           </p>

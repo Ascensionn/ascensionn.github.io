@@ -88,7 +88,10 @@ export const statement = {
  * here claims a credential, an employer or a school. "New Yorker" used to be in this list and
  * was removed at his request — he is not one.
  */
-export const roles: string[] = ['Learner', 'Founder', 'Software Engineer', 'Engineer', 'Student', 'Data Engineer', 'Builder', 'Problem-solver', 'Creator', 'Thinker']
+/* No word here may start with a vowel: "Engineer" was dropped because "an" flickering in and out
+   of the sentence read badly. Software Engineer and Data Engineer say the same thing anyway.
+   Add a vowel-initial word back and the article will start changing again. */
+export const roles: string[] = ['Learner', 'Founder', 'Software Engineer', 'Student', 'Data Engineer', 'Builder', 'Problem-solver', 'Creator', 'Thinker']
 
 /**
  * The word that stands still when nothing may move: prefers-reduced-motion, a static capture,

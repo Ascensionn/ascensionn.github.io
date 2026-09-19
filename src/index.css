@@ -68,9 +68,9 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   /* The floating bar's lane. Anything the browser scrolls to itself — a link taking keyboard
-     focus, scrollIntoView on the tail of a list — stops short of it instead of landing under
-     it. The bar also stands down whenever the page is still (see FloatingNav.tsx), so this is
-     the belt to that pair of braces rather than the only thing keeping the lane clear. */
+     focus, scrollIntoView on the tail of a list — stops short of it instead of landing under it.
+     The page also ends on a matching lane of padding (App.module.css), since the bar now stays
+     up for the whole document past the hero. */
   scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 

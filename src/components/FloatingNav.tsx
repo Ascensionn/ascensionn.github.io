@@ -5,8 +5,9 @@ import pill from './Pill.module.css'
 import styles from './FloatingNav.module.css'
 
 type Props = {
-  /** The bar keeps out of both: over the hero it is redundant, over the footer it would cover the colophon. */
+  /** Over the hero the bar is redundant — the hero carries its own nav — so it waits for it to leave. */
   heroRef: RefObject<HTMLElement | null>
+  /** Kept for the lane measurement below, and so callers do not have to change. */
   footerRef: RefObject<HTMLElement | null>
   theme: Theme
   onToggleTheme: () => void
@@ -20,23 +21,13 @@ const sections = [
   { id: 'contact', label: 'Contact' },
 ]
 
-/** Pixels of continuous travel before a change of direction counts, so trackpad jitter is ignored. */
-const DIRECTION_THRESHOLD = 90
-
-/** How far past the hero the bar stays up before it yields, so it is seen at least once. */
-const INTRO_GRACE = 340
-
-/** Height of the bar's lane above the bottom edge; the footer hides the bar on reaching it. */
-const LANE = 80
-
 /**
- * How long the bar stays up after the last scroll. A fixed bar that simply stays put covers
- * whatever happens to be at the foot of the window — at 1440x900 that was the last line of the
- * contact list — and no amount of page padding fixes it, because the covered line can be in the
- * middle of a tall card. So the bar retires whenever you stop: it belongs to the act of moving
- * through the page, not to the act of reading it.
+ * The bar used to come and go with the direction of travel, so that it never sat over what you
+ * were reading. Andy asked for it to stay: "the bar that pops up on the bottom should always be
+ * present after the hero page. it shouldn't pop in and out." So it is now simply up for the whole
+ * document past the first screen, and the page reserves a lane for it at the foot (--nav-lane in
+ * index.css) so nothing ends up permanently underneath.
  */
-const REST_AFTER = 3000
 
 type State = { shown: boolean; current: string }
 
@@ -44,13 +35,9 @@ type State = { shown: boolean; current: string }
  * A slim bar along the bottom edge carrying the route to About / Work / Contact and the theme
  * switch, for the whole page past the first screen — the hero's own nav scrolls away with it.
  *
- * It introduces itself as you leave the hero, yields while you read on, comes back the moment you
- * scroll up, and stands down again a few seconds after you settle. So nothing you are reading ever
- * stays underneath it: hold still and the page is yours, flick up and the route is back.
- *
- * It also holds its ground while it is hovered — so it never retires out from under a pointer on
- * its way to a link — and while keyboard focus is inside it, where hiding would take the focus
- * with it: `inert` on the wrapper blurs whatever is focused in there.
+ * It appears once the hero has scrolled away and then stays for the rest of the page. The document
+ * carries a matching lane of bottom padding, so the last line of the contact list and the footer's
+ * colophon both clear it instead of sitting underneath.
  *
  * Everything is measured from the scroll offset in one rAF-throttled pass rather than from
  * IntersectionObservers: observers are re-evaluated against an expanded viewport while a full-page
@@ -66,48 +53,16 @@ export function FloatingNav({ heroRef, footerRef, theme, onToggleTheme, menuOpen
   const bump = useRef<() => void>(() => {})
 
   useEffect(() => {
-    let last = window.scrollY
-    let anchor = window.scrollY
-    let direction = 0
-    let reading = false
-    let resting = false
-    let heroExit = Infinity
     let queued = false
-    let restTimer = 0
 
     const measure = () => {
       queued = false
       const y = window.scrollY
       const viewport = window.innerHeight
       const hero = heroRef.current?.getBoundingClientRect()
-      const footer = footerRef.current?.getBoundingClientRect()
 
       const pastHero = hero !== undefined && hero.bottom <= 0
-      // Hide as soon as the footer reaches the bar's lane, rather than when it merely comes into view.
-      const atFooter = footer !== undefined && footer.top < viewport - LANE
       const scrollable = document.documentElement.scrollHeight > viewport + 4
-
-      // Leaving the hero reveals the bar for a moment, so it is discovered rather than waited for.
-      if (!pastHero) heroExit = Infinity
-      else if (heroExit === Infinity) {
-        heroExit = y
-        reading = false
-        anchor = y
-        direction = 0
-      }
-
-      const delta = y - last
-      last = y
-      if (delta !== 0) {
-        const next = delta > 0 ? 1 : -1
-        // A change of direction restarts the run, so the threshold always measures one continuous move.
-        if (next !== direction) {
-          direction = next
-          anchor = y - delta
-        }
-        if (Math.abs(y - anchor) > DIRECTION_THRESHOLD) reading = direction === 1
-      }
-      if (y < heroExit + INTRO_GRACE) reading = false
 
       const middle = y + viewport * 0.45
       let id = sections[0].id
@@ -126,48 +81,23 @@ export function FloatingNav({ heroRef, footerRef, theme, onToggleTheme, menuOpen
       const keyboardInside = !!wrapRef.current && wrapRef.current.contains(document.activeElement)
 
       setState((prev) => {
-        const next = { shown: (scrollable && pastHero && !atFooter && !reading && !resting) || keyboardInside, current: id }
+        const next = { shown: (scrollable && pastHero) || keyboardInside, current: id }
         return prev.shown === next.shown && prev.current === next.current ? prev : next
       })
     }
 
-    // Declarations, not consts: the two call each other, and a timer that outlives one of
-    // them is exactly the case a temporal dead zone would turn into a runtime error.
-    function rest(): void {
-      restTimer = 0
-      // Held: give it another full window rather than pulling it out from under the pointer.
-      if (held.current) restart()
-      else {
-        resting = true
-        measure()
-      }
-    }
-
-    function restart(): void {
-      window.clearTimeout(restTimer)
-      resting = false
-      restTimer = window.setTimeout(rest, REST_AFTER)
-    }
-
-    bump.current = () => {
-      restart()
-      measure()
-    }
+    bump.current = measure
 
     const onScroll = () => {
       if (queued) return
       queued = true
-      // Throttled with the measure it precedes, so a flick of the wheel is one timer, not forty.
-      restart()
       requestAnimationFrame(measure)
     }
 
-    restart()
     measure()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
     return () => {
-      window.clearTimeout(restTimer)
       bump.current = () => {}
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)

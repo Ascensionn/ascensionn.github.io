@@ -19,7 +19,8 @@
    has to move. */
 .statement {
   margin-top: clamp(56px, 11cqi, 220px);
-  font-size: calc(100cqi / 8.74);
+  /* Sized so the longest word, "Software Engineer", runs nearly the full measure of the card. */
+  font-size: calc(100cqi / 7.7);
   /* The greeting above the word, in em of it. Smaller than the closing panel's 0.36 so the line
      reads as the quiet half of the statement rather than as a second line of near-equal weight. */
   --mark-quiet: 0.3;

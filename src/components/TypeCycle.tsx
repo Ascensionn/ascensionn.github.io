@@ -57,13 +57,12 @@ const LOOP_HOLD = 700
  * Type change to type change, in ms, drawn uniformly from this range.
  *
  * The window matters more than the average. A fixed interval reads as a machine ticking; a range
- * this wide reads as a hand. At ~430ms mean it is four or five faces per word — enough that the
- * type is visibly being tried, few enough that every one of them can be read before it goes. The
- * floor is the real constraint: below ~250ms the word stops being legible in its own right and
- * starts being a flicker, which is exactly what the owner asked to be rid of.
+ * this wide reads as a hand. Andy asked for half a second more on each step, so the mean is now
+ * ~930ms: about two faces per word, each one held long enough to be read as a choice rather than
+ * a flicker.
  */
-const STEP_MIN = 340
-const STEP_MAX = 520
+const STEP_MIN = 840
+const STEP_MAX = 1020
 
 /**
  * The size ladder, as multipliers on the fitted size. Used where `size` is 'audition'.
@@ -73,11 +72,12 @@ const STEP_MAX = 520
  * These multiply it, and they are all <= 1, so the word can only ever be smaller than the box
  * already reserved for it: no size in the ladder can reach an edge, at any width, in any face.
  *
- * The floor is 0.7 rather than something more dramatic because the bottom rung still has to read
- * as the same sentence. Below about two-thirds the word stops being the statement's focal point
- * and starts looking like a caption that has come adrift from its own line.
+ * The band is deliberately tight: Andy asked for the size to move by no more than about 10px
+ * either way. At the shipped desktop size (~150px) these rungs span roughly 14px top to bottom,
+ * so the specimen breathes without the sentence appearing to change its mind about how big it is.
+ * They stay <= 1 so the word can still never reach the edge of its reserved box.
  */
-const SIZES = [1, 0.93, 0.86, 0.78, 0.7]
+const SIZES = [1, 0.967, 0.934]
 
 /** Every custom property the audition writes, so stopping can put them all back. */
 const MARK_VARS = ['family', 'weight', 'style', 'track', 'fit', 'top', 'left', 'size'] as const
