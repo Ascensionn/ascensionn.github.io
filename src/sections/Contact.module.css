@@ -1,0 +1,126 @@
+/* ------------------------------------------------------------------ the invitation */
+.lead {
+  margin-top: clamp(56px, 10cqi, 200px);
+  /* Heavier and fully inked: this line, not the address, is the section's hero. */
+  font-weight: 600;
+  color: var(--ink);
+  max-width: 12em;
+}
+
+/* ------------------------------------------------------------------ ways in */
+.channels {
+  margin-top: clamp(48px, 9cqi, 160px);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Narrow: label above value. Wide: a mono label column with the address beside it. */
+.channel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+  padding-block: clamp(16px, 1.8cqi, 28px);
+  border-top: 1px solid var(--line);
+}
+
+.term {
+  color: var(--muted);
+}
+
+.value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px clamp(16px, 2cqi, 40px);
+  min-width: 0;
+  font-size: clamp(19px, 2.2cqi, 40px);
+  line-height: 1.16;
+  letter-spacing: -0.025em;
+}
+
+/* The address is long; let it break anywhere rather than push the card wide at 320px. */
+.link,
+.plain {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* Underline sweeps in from the left, on hover anywhere in the row and on keyboard focus. */
+.link {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% max(1px, 0.035em);
+  transition: background-size 0.55s var(--ease-out);
+}
+
+.channel:hover .link,
+.link:focus-visible {
+  background-size: 100% max(1px, 0.035em);
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 0.45s var(--ease-out);
+}
+
+.channel:hover .arrow,
+.link:focus-visible .arrow {
+  transform: translate(0.08em, -0.08em);
+}
+
+/* Caption-sized control beside the address — deliberately not a button shape. */
+.copy {
+  align-self: center;
+  padding: 6px 0;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 0.3s var(--ease-out);
+}
+
+.copy:hover,
+.copy:focus-visible {
+  color: var(--ink);
+}
+
+.copyMark {
+  font-variant-numeric: tabular-nums;
+}
+
+.copyText {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 0.4s var(--ease-out);
+}
+
+.copy:hover .copyText,
+.copy:focus-visible .copyText {
+  background-size: 100% 1px;
+}
+
+@container (min-width: 640px) {
+  .channel {
+    grid-template-columns: minmax(6rem, 2fr) minmax(0, 10fr);
+    gap: var(--gutter);
+  }
+
+  /* The label sits on the same baseline as the first line of the address. */
+  .term {
+    padding-top: 0.42em;
+  }
+}
+
+/* Once the row has room, the copy caption closes it against the right edge instead of
+   trailing the address. */
+@container (min-width: 720px) {
+  .copy {
+    margin-left: auto;
+    align-self: center;
+  }
+}

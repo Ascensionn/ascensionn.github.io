@@ -1,0 +1,144 @@
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: calc(100svh - 2 * var(--inset));
+  min-height: 480px;
+  padding: var(--hero-pad);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero:focus {
+  outline: none;
+}
+
+/* The engine draws a transparent canvas that fills this box, in the colour of --ascii-ink. */
+.art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  --ascii-ink: var(--ink);
+}
+
+/* The handover to the portrait + name. The canvas is faded rather than removed, so the card
+   cross-dissolves instead of cutting, but it goes all the way to nothing: a ghost of the same
+   phrase sitting behind the typeset one only ever read as a smudge. The transition is on the
+   canvas, never on .art: .art is the box the engine measures itself against, and transforming
+   it would make it rebuild its grid.
+
+   Once the fade is over, Hero.tsx stops the engine's rAF loop — nothing invisible keeps
+   drawing — and Replay starts it again. */
+.art canvas {
+  transition: opacity 1.2s var(--ease-out) 0.15s;
+}
+
+.hero[data-resolved] .art canvas {
+  opacity: 0;
+}
+
+.copy {
+  position: absolute;
+}
+
+/* Caption row along the bottom edge, on the same 12-column grid as the nav,
+   with the intro's progress rule running the full width beneath it.
+
+   Every item in it wears the nav's outlined capsule: the row sits on the same art the
+   nav does, and a bare label there reads as more pattern. The static ones (role, place,
+   timecode) carry the outline without the pointer cursor or the hover inversion, so the
+   one thing you can actually press — Scroll — still tells itself apart. */
+.foot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+}
+
+.footRow {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: center;
+}
+
+.role {
+  grid-column: 1 / 4;
+  white-space: nowrap;
+}
+
+.location {
+  grid-column: 4 / 7;
+}
+
+.timecode {
+  grid-column: 7 / 12;
+}
+
+.scroll {
+  grid-column: 12 / 13;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+/* The nav keeps Skip/Replay on desktop; on phones it lives here instead, next to the role. */
+.phoneIntro {
+  display: none;
+}
+
+@media (max-width: 1023.98px) {
+  .role {
+    grid-column: 1 / 5;
+  }
+
+  .location {
+    grid-column: 5 / 9;
+  }
+
+  .timecode {
+    grid-column: 9 / 13;
+    justify-self: end;
+  }
+
+  /* Doubled so it beats Pill's own `display`, whichever order the modules land in. */
+  .scroll.scroll {
+    display: none;
+  }
+}
+
+/* Phones: the capsules are wider than bare labels were, so the row stops being a grid
+   and simply wraps — two lines at 390, and the Skip button keeps the right-hand end. */
+@media (max-width: 759.98px) {
+  .footRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .role,
+  .location,
+  .timecode,
+  .phoneIntro {
+    grid-column: auto;
+    justify-self: auto;
+  }
+
+  .phoneIntro {
+    display: block;
+    margin-left: auto;
+  }
+}
+
+/* Narrowest phones: three capsules will not share two lines with the Skip button. The
+   timecode is the one to go — it is decorative (aria-hidden), it repeats what the rule
+   underneath already shows, and it is empty for most of the visit anyway. */
+@media (max-width: 379.98px) {
+  .timecode {
+    display: none;
+  }
+}

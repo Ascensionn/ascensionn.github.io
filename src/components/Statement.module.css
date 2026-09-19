@@ -1,0 +1,42 @@
+.statement {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: clamp(34px, 11.2cqi, 64px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+@container (min-width: 640px) {
+  .statement {
+    font-size: 7.4cqi;
+    line-height: 0.94;
+    letter-spacing: -0.05em;
+  }
+}
+
+/* Each word sits in a clipping mask so it can slide up from below its own baseline. */
+.mask {
+  display: inline-block;
+  overflow: clip;
+  overflow-clip-margin: 0.08em;
+  vertical-align: top;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.word {
+  display: inline-block;
+  transform: translateY(105%);
+  transition: transform 1s var(--ease-out);
+}
+
+.statement[data-shown] .word {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word {
+    transform: none;
+  }
+}

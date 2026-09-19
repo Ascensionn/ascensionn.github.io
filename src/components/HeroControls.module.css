@@ -1,0 +1,99 @@
+.swap {
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Doubled so the stacked-faces grid beats Pill's `display: inline-flex`, whichever
+   order the two CSS modules end up in. Both faces share one cell, so the button
+   keeps the width of the longer label and never jumps when they swap. */
+.swap.swap {
+  display: inline-grid;
+  justify-items: center;
+}
+
+/* Both faces share one cell; the inactive one slides out of the clipped chip. */
+.face {
+  grid-area: 1 / 1;
+  transition:
+    transform 0.45s var(--ease-out),
+    opacity 0.3s var(--ease-out),
+    visibility 0.45s;
+}
+
+.swap[data-done='false'] .face:last-child,
+.swap[data-done='true'] .face:first-child {
+  transform: translateY(110%);
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Kept light enough to recede, dark enough to clear 4.5:1 on every surface this button sits on. */
+.state {
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------------------------ intro readout */
+/* Once the phrase has settled there is nothing left to report, so both parts fade out. */
+.readout,
+.rule {
+  transition:
+    opacity 0.6s var(--ease-out),
+    visibility 0.6s;
+}
+
+.readout[data-done='true'],
+.rule[data-done='true'] {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Doubled so it beats Pill's own `display` and `transition`, whichever order the two CSS
+   modules land in: the readout wears the nav's capsule, but the only thing it animates is
+   its own fade-out — it is a readout, so it will never be hovered or pressed. */
+.readout.readout {
+  display: inline-flex;
+  gap: 0.9ch;
+  white-space: nowrap;
+  transition:
+    opacity 0.6s var(--ease-out),
+    visibility 0.6s;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.muted,
+.phase {
+  color: var(--muted);
+}
+
+/* Now that the readout is a bordered capsule, every character that changes inside it would
+   otherwise move its edges. The seconds are already tabular and zero-padded; this reserves
+   the width of the longest phase name ("— Breakdown", "— Rearrange" — eleven characters
+   including the dash and its space) so the capsule is struck once and never resizes for the
+   whole thirteen seconds. The tracking has to be added back by hand: `ch` is the advance of
+   the glyph alone, and every one of the eleven also carries a letter-space. The extra tenth
+   is for the em dash, which is a hundredth of a pixel wider than the digit `ch` measures. */
+.phase {
+  display: inline-block;
+  min-width: calc(11.1ch + 11 * var(--label-tracking));
+}
+
+.phase::before {
+  content: '— ';
+}
+
+.rule {
+  display: block;
+  height: 1px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}

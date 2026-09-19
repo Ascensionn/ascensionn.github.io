@@ -1,0 +1,197 @@
+/* ------------------------------------------------------------------ the type-cycling block
+   The one specimen block on the site (src/components/TypeCycle.tsx). Two callers dress it:
+   About sets the statement with its rotating word, the closing panel sets "Andy He".
+
+   NO COLOUR IS DECLARED IN THIS FILE, deliberately. The word is --ink on --card and the quiet
+   lines are --muted, whatever the theme; there is no scheme attribute, no background of its own
+   and nothing for the audition to flip. The closing panel used to redefine the card's tokens
+   four ways on a timer and the owner asked for that to go — it is gone, and there is no rule
+   left in here that could bring it back.
+
+   What the caller supplies is the SIZE: `font-size` on the root sets the whole block, every
+   other length below is in em of it. */
+
+.mark {
+  /* The resting face — Geist at 800 — written out so that with no JavaScript, under
+     prefers-reduced-motion, or in a static capture, the block renders the settled state without
+     anything having to run. TypeCycle only ever overwrites these.
+     --mark-top is the value src/lib/faces.ts calls REST_TOP; keep the two in step. */
+  --mark-family: var(--sans);
+  --mark-weight: 800;
+  --mark-style: normal;
+  --mark-track: -0.055;
+  --mark-fit: 1;
+  --mark-top: -0.1;
+  --mark-left: 0;
+
+  /* The size half of the audition, as a multiplier on the fitted size, and the baseline it
+     pivots about. TypeCycle's SIZES ladder writes the first; faces.ts measures the second and
+     REST_SPECIMEN's value is duplicated here as the default (REST_TOP + 0.9). Every rung of the
+     ladder is <= 1, so the word can only ever be smaller than the box already reserved for it. */
+  --mark-size: 1;
+  --mark-base: 0.8;
+
+  /* OPTICAL LEFT EDGE. Not one of the values above: the audition never touches it.
+
+     The quiet lines and the word are one sentence and must hang on one edge, but they are set
+     ~3x apart in size, and a glyph's left side bearing scales with the type. Flush the two boxes
+     and the big line is inset by its own bearing — measured on the running page (build/c4-ink.mjs)
+     the word's first ink pixel sat 0.037em of the display size to the right of the "I" in
+     "I am", at every width from 320 to 2560 and in every face.
+
+     Pulling the word back by that 0.037em lands a flat-sided cap — L, F, D, B, P, T, and all but
+     two of the words — exactly on the stem above it. The two that start with a round S then
+     overhang by 0.017em, which is the optical correction a round cap wants at display size and
+     is why this is one constant rather than a per-word alignment: removing every word's own
+     bearing would line L and S up mathematically and leave the S looking indented. faces.ts
+     already aligns each face's ink to the resting face's, so this shift applies to all of them
+     equally and no swap can move it. */
+  --mark-hang: 0.037;
+
+  /* The quiet lines, in em of the word. Callers override it; see About.module.css. */
+  --mark-quiet: 0.36;
+}
+
+/* Part of the same sentence, so the same family on the same left edge — quieter only in size,
+   weight and tone. Both sit outside the reserved box, so neither can be moved by a swap.
+
+   A caller that wants the closing line to read as a note rather than as the end of the sentence
+   sets --mark-tail and --mark-tail-gap; About's 'supporting' layout is the one that does. */
+.lead,
+.tail {
+  display: block;
+  color: var(--muted);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+/* The floor is what keeps these readable on a phone. They are quoted as a fraction of the word
+   so that the sentence holds its proportions as the card grows, but the word itself is sized to
+   the card's measure — so on a 320px card a third of it is 10px, and the two lines that carry
+   the actual sentence would end up smaller than body copy. Below ~47px of display size the
+   fraction stops applying and the quiet lines simply stay at 14px. */
+.lead {
+  margin-bottom: 0.06em;
+  font-size: max(14px, calc(var(--mark-quiet) * 1em));
+}
+
+.tail {
+  font-size: max(14px, calc(var(--mark-tail, var(--mark-quiet)) * 1em));
+  /* The gap is quoted in em of the WORD, like every other length in this file — but `em` on this
+     element means its own reduced size, so the quiet factor is divided back out. Writing it in
+     the tail's own em instead would make the gap shrink whenever the note was made smaller,
+     which is the opposite of what a note set apart from a sentence wants. */
+  margin-top: calc(var(--mark-tail-gap, 0.1) / var(--mark-tail, var(--mark-quiet)) * 1em);
+}
+
+/* The reserved box. 0.92em is the height that holds the specimen — the shared baseline lands
+   ~0.78em down, and no fitted face's descender falls more than 0.063em past the box
+   (build/face-metrics.mjs, build/ink-bounds.mjs). The word inside is out of flow, so neither a
+   longer word nor a swapped typeface nor a smaller size can move anything below it. */
+.slot {
+  display: block;
+  position: relative;
+  height: 0.92em;
+}
+
+/* ------------------------------------------------------------------ the size audition
+   The second half of "type keeps changing": faces.ts fits every candidate to the SAME ink width
+   — which is exactly what stops a swap reflowing the sentence — so on its own the specimen would
+   change shape and never size. This scales it, about the point where a change of size is
+   invisible as a movement: the baseline and the ink's left edge. The word grows and shrinks
+   upward from a line that never moves, the way a size is tried on a specimen sheet.
+
+   scale() about that point is written the long way — translate down to the baseline, scale,
+   translate back — because transform-origin cannot be given in em of the element's own font-size
+   on the y axis here; the x half of the pivot it can, hence the origin below.
+
+   A transform rather than font-size for the same reason as .face: transform changes are excluded
+   from layout-shift scoring by definition, and they cost a composited redraw instead of a reflow
+   of a 150px display line. */
+.sizer {
+  display: block;
+  position: absolute;
+  inset: 0;
+  transform: translateY(calc(var(--mark-base) * 1em)) scale(var(--mark-size)) translateY(calc(var(--mark-base) * -1em));
+  transform-origin: calc(var(--mark-hang) * -1em) 0;
+  will-change: transform;
+}
+
+/* The fit and the two offsets are applied as a TRANSFORM, not as font-size/top/left.
+
+   They started out as font-size and offsets, which is the obvious way to write it and is wrong
+   here. The span is out of flow, so a swap could never move the meta bar — but an absolutely
+   positioned element that changes its own rendered rect is still a layout shift as far as the
+   browser is concerned, and every swap logged one: build/c2-cls.mjs attributed 13 entries and
+   CLS 0.0995 to this span, which was the whole page's CLS and a hair off the 0.1 line.
+
+   The geometry is identical: laying the word out at `fit` x size and offsetting the box by
+   (left, top) em of THAT size is the same as laying it out at size, scaling by `fit` about the
+   top-left corner, and translating by the same pixel distances. Hence the `* var(--mark-fit)`
+   inside each translate — faces.ts hands over offsets in em of the fitted size, and this element
+   is measured in unfitted ones. Letter-spacing scales with the transform, so --mark-track still
+   lands where it did. */
+.face {
+  position: absolute;
+  top: 0;
+  /* The optical hang, in em of the display size. It is a constant, so unlike --mark-left it
+     never changes between faces and cannot shift. */
+  left: calc(var(--mark-hang) * -1em);
+  transform: translate(calc(var(--mark-left) * var(--mark-fit) * 1em), calc(var(--mark-top) * var(--mark-fit) * 1em)) scale(var(--mark-fit));
+  transform-origin: 0 0;
+  /* Not a micro-optimisation: it is part of the shift fix. On its own layer the swap is a
+     composited transform, and the shift tracker stops attributing the movement to the text node
+     inside. Measured across the whole page: 0.0995 -> 0.0448 with the transform alone ->
+     0.0127 with this. */
+  will-change: transform;
+  font-family: var(--mark-family);
+  font-style: var(--mark-style);
+  font-weight: var(--mark-weight);
+  line-height: 1;
+  letter-spacing: calc(var(--mark-track) * 1em);
+  /* The word arrives with its spaces written as newlines (TypeCycle.tsx). `nowrap` collapses
+     them back to ordinary spaces and holds the whole word on one line here; the phone block
+     below switches to `pre-line` and the same newlines become the break. One text node either
+     way — see the comment in TypeCycle.tsx for why that matters. */
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------- phones: two lines, where it pays
+   OPT-IN (`stack`), and the closing panel is the only caller that takes it.
+
+   The idea: holding a two-token word on one line on a 390px screen sizes the whole block to that
+   long line, and everything shorter then reads as body copy. Setting each token on its own line
+   instead lets the block be sized to the longest single TOKEN, which is much bigger type. The
+   box is two lines tall at all times, so the break costs no movement — an entry that fits on one
+   line simply leaves the second empty.
+
+   It pays for the wordmark and not for the statement, and the difference is what the two blocks
+   have underneath them. "Andy He" breaks to "Andy" / "He": both lines are always full, the type
+   goes from 87px to 138px at 390, and the spare space question never arises. About's rotation
+   contains "Problem-solver", which is ONE token and cannot break at all — so the most the split
+   could buy the statement is 8.49em down to 7.06em, a fifth — while eight of its ten words would
+   leave a line empty, and that empty line would fall INSIDE the sentence, between the word and
+   "passionate about Big Data.". The gap between a word and the rest of its own sentence must not
+   depend on which word is up; spare space above a rule reads as the card's padding, spare space
+   inside a sentence reads as a fault. So About stays on one line and takes the smaller type.
+   (Measured by build/about-fit.mjs, which prints every one of these set widths.)
+
+   The break is authored, not discovered. The word's spaces are newlines in the text itself and
+   `pre-line` honours them while still collapsing everything else, so a two-token entry is two
+   lines in every face. Leaving it to ordinary wrapping would make the line count depend on the
+   typeface of the moment — every face is fitted to its own width, so one of them can set on a
+   single line what Geist breaks in two — and the block would jump half a line mid-cycle. Three
+   or more tokens would be three or more lines and outgrow the slot; two is what content.ts
+   undertakes to stay within. */
+@container (max-width: 520px) {
+  .stack .slot {
+    height: 1.92em;
+  }
+
+  /* The word stays welded to the TOP of the box, so a single-line entry leaves its spare line at
+     the bottom, against the meta rule rather than against its own sentence. */
+  .stack .face {
+    white-space: pre-line;
+  }
+}

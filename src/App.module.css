@@ -1,0 +1,15 @@
+.page,
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--inset);
+}
+
+.page {
+  padding: var(--inset);
+  padding-inline: max(var(--inset), env(safe-area-inset-left)) max(var(--inset), env(safe-area-inset-right));
+}
+
+.main:focus {
+  outline: none;
+}

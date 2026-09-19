@@ -1,0 +1,382 @@
+/* ------------------------------------------------------------------
+   The hero's last beat: portrait + "My name is" + the name as a SIGN.
+
+   Two numbers drive the whole composition.
+
+     --w    the width the block is allowed to take, as a share of the band.
+     --col  the text column inside it. Everything else — the portrait, the
+            gaps, the lead type, the plaque, the scribble, the hairlines —
+            is a multiple of one of those two, so the block keeps exactly the
+            same proportions from a 320px phone to a 2560px display.
+
+   They are measured against this box rather than against the viewport, which
+   is why .wrap is a size container: 100cqi is exactly the band the block has
+   to fill and 100cqb is exactly the height it has to fit. No vw arithmetic to
+   keep in step with --inset and --hero-pad, and no breakpoint at which the two
+   drift apart.
+
+   The band is the hero's own middle row rather than an overlay with guessed
+   clearances: .wrap is a flex item between the nav and the caption row, so it
+   IS whatever is left between them at any width. That is what keeps it clear
+   of both at every size — the block is centred in real space, not in a box
+   that assumed a one-line caption row and was 40px out the moment it wrapped
+   to three. It stays out of the canvas's way because it is transparent and
+   ignores the pointer, not because it is taken out of flow.
+
+     96cqi   the block takes 96% of the band's width, which puts its two edges
+             within a few pixels of the nav capsule above and the caption chip
+             below — ~94% of the card, counting the hero's own padding.
+     197cqb  the block comes out ~0.46 x --w tall, so this caps it at ~91% of
+             the band's height on a short or landscape window, where height,
+             not width, is what runs out first. The two are close on purpose:
+             between 1280x720 and 2560x1440 one or the other binds by a few
+             per cent, never by a third, so the block never shrinks into the
+             middle of the card on a laptop.
+   ------------------------------------------------------------------ */
+.wrap {
+  container-type: size;
+  position: relative;
+  z-index: 1;
+  /* Takes the space the nav and the caption row leave, however tall they are. */
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, auto);
+  place-content: center;
+  /* Breathing room against the two rows; the rows' own heights are already out of the way. */
+  padding: clamp(10px, 1.4vh, 22px) 0;
+  /* Decorative on top of a live canvas: the pointer belongs to the ASCII field. */
+  pointer-events: none;
+}
+
+.block {
+  /* On .block, not on .wrap: an element is never its own query container, so cq units
+     written here are the ones that see the box above. */
+  --w: min(96cqi, 197cqb);
+  --col: calc(var(--w) * 0.61);
+  --lead: calc(var(--col) * 0.186);
+  /* The sign's word. Sized against the column, not against its own glyphs, so the frame
+     lands on the same width whatever face is in it — which is what makes the webfont's
+     arrival free: the plaque is already the right size before Permanent Marker loads, and
+     only the letters inside it change. 0.225 sets the word at ~96% of the frame's inner
+     width in the face that ships, leaving enough slack that a fallback cursive still sits
+     inside the frame instead of running over its padding. */
+  --sign: calc(var(--col) * 0.225);
+  --hair: max(1px, calc(var(--sign) * 0.017));
+
+  position: relative;
+  width: var(--w);
+  display: grid;
+  grid-template-columns: calc(var(--w) * 0.345) minmax(0, 1fr);
+  /* Portrait and text column are the same height: the picture is a panel, not a thumbnail. */
+  align-items: stretch;
+  column-gap: calc(var(--w) * 0.045);
+}
+
+/* ------------------------------------------------------------------ portrait
+   No aspect-ratio of its own: it takes the height of the text beside it, which is what
+   makes the two columns read as one block rather than a picture with words next to it.
+   The 800x800 source is cropped by object-position rather than centred, because centring
+   a square into a portrait box cuts the face in half. */
+.portrait {
+  overflow: hidden;
+  /* A hairline at 64px would be a thread at 400px, so the edge grows with the block. */
+  border: max(1px, calc(var(--lead) * 0.006)) solid color-mix(in srgb, var(--ink) 32%, transparent);
+  border-radius: clamp(12px, calc(var(--lead) * 0.14), 44px);
+  background: color-mix(in srgb, var(--ink) 6%, var(--card));
+  /* Monochrome, like everything else on the card. */
+  filter: grayscale(1) contrast(1.04);
+  opacity: 0;
+  transform: translateY(calc(var(--lead) * 0.09)) scale(0.975);
+  transition:
+    opacity 0.55s var(--ease-out),
+    transform 0.8s var(--ease-out);
+}
+
+.portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 42% 45%;
+}
+
+/* ------------------------------------------------------------------ the sentence */
+.name {
+  min-width: 0;
+  display: grid;
+  /* One column, pinned to the heading's own width. Not `auto`: the sign's word is
+     `nowrap`, so an auto track would take its max-content size as a floor and a face
+     wider than the one that ships would push the whole plaque out past the card. */
+  grid-template-columns: minmax(0, 1fr);
+  /* Two rows that hug their content, pushed apart to fill the portrait's height. */
+  grid-template-rows: max-content max-content;
+  align-content: space-between;
+  gap: calc(var(--lead) * 0.26);
+  font-size: var(--lead);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+/* Hugs its own text, so the scribble beneath it is exactly as wide as the words.
+   The padding is the lane the stroke sits in — it is positioned, so it would otherwise
+   have no height of its own and the sign could ride up into it. */
+.lead {
+  position: relative;
+  display: block;
+  width: fit-content;
+  padding-bottom: calc(var(--lead) * 0.24);
+  opacity: 0;
+  transform: translateY(calc(var(--lead) * 0.08));
+  transition:
+    opacity 0.55s var(--ease-out) 0.08s,
+    transform 0.8s var(--ease-out) 0.08s;
+}
+
+.wrap[data-shown] .portrait,
+.wrap[data-shown] .lead {
+  opacity: 1;
+  transform: none;
+}
+
+/* ------------------------------------------------------------------ the sign
+   A framed plaque with the name in it, tilted a couple of degrees and slapped on:
+   double hairline border, tiny mono caps top and bottom, the word in a vandal face.
+
+   .sign is the unrotated lane the plaque lives in; the rotation happens on .plaque, so
+   the tilt costs no layout and the corners the tilt throws out have somewhere to go.
+   A box of width w tilted by t rises w*sin(t)/2 above its own top edge; at 2.6deg that is
+   2.27% of the plaque's width, which is what this padding is (with a little over). */
+.sign {
+  display: block;
+  min-width: 0;
+  padding: calc(var(--col) * 0.024) 0;
+  /* The frame's own strokes, kept off the heading's -0.04em. */
+  letter-spacing: normal;
+}
+
+.plaque {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--sign) * 0.095);
+  padding: calc(var(--sign) * 0.17) calc(var(--sign) * 0.26);
+  border: var(--hair) solid color-mix(in srgb, var(--ink) 78%, transparent);
+  border-radius: calc(var(--sign) * 0.05);
+  /* The faintest wash, so the plaque reads as a thing stuck on the paper rather than a
+     rectangle drawn on it. Ink only — it is the card's own colour, a little darker. */
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
+  transform: rotate(-2.6deg);
+  transform-origin: 50% 50%;
+}
+
+/* The second hairline. An inset ring rather than a second element's border, so the two
+   strokes can never disagree about the corner radius. */
+.plaque::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--sign) * 0.075);
+  border: var(--hair) solid color-mix(in srgb, var(--ink) 42%, transparent);
+  border-radius: calc(var(--sign) * 0.03);
+  pointer-events: none;
+}
+
+.caption {
+  font-family: var(--mono);
+  /* Empty in the DOM on purpose — the text arrives here. See HeroIdentity.tsx: keeping
+     the two caption strings out of the element is what keeps the <h1>'s own text, and a
+     copy of it, exactly "My name is Andy He". */
+  display: block;
+  /* Micro-caps, but never below the size at which a tracked mono goes to mush. */
+  font-size: max(9px, calc(var(--sign) * 0.125));
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.15em;
+  /* The tracking is applied to the right of every glyph, including the last one, which
+     pushes a centred line half a space off centre. This takes it back. */
+  text-indent: 0.15em;
+  text-transform: uppercase;
+  text-align: center;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  white-space: nowrap;
+}
+
+.caption::before {
+  content: attr(data-cap);
+}
+
+/* The word itself: the one place on the site that is not Geist. */
+.word {
+  display: block;
+  font-family: var(--vandal);
+  font-size: var(--sign);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  /* Permanent Marker's ink sits LOW in its em box — measured in the plaque, the air above
+     the word came out more than twice the air below it. This is the counterweight, so the
+     two captions end up equally far from the letters rather than nominally so. */
+  padding: 0 0 calc(var(--sign) * 0.1);
+  white-space: nowrap;
+}
+
+/* The sticker landing. A transition, not a keyframe animation: the block renders in its
+   final state whenever it is already `shown` on first paint — a ?hero_t capture, a reload
+   past the beat — so nothing here can make a still non-deterministic. The overshoot lives
+   in the easing curve (the y > 1 control point), which is what gives the slap its rebound. */
+.sign .plaque {
+  opacity: 0;
+  /* Comes in bigger and much more crooked, then snaps flat. The scale is kept to 1.08 on
+     purpose: the plaque already reaches within a few per cent of the card's edge at rest,
+     and anything larger clips its own frame against the hero's overflow on the way in. */
+  transform: rotate(-13deg) scale(1.08);
+  transition:
+    opacity 0.2s linear 0.32s,
+    transform 0.58s cubic-bezier(0.3, 1.55, 0.5, 1) 0.32s;
+}
+
+.wrap[data-shown] .sign .plaque {
+  opacity: 1;
+  transform: rotate(-2.6deg) scale(1);
+}
+
+/* ------------------------------------------------------------------ scribble */
+.scribble {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  /* The box takes the viewBox's own proportion rather than a height computed from the
+     font size, which is the only way the two axes are guaranteed to scale by the same
+     factor: the stroke's round nib stays round and the drawn shape is never flattened.
+     It also no longer depends on the lead string's width-to-size ratio — the old
+     `--lead * 0.21` was ~10% short of square for "My name is" and would have been wrong
+     again for any other wording. At 620:34 the box comes out ~0.234 x --lead tall, which
+     still sits inside the 0.24 lane .lead reserves for it below the type. */
+  aspect-ratio: 620 / 34;
+  height: auto;
+  /* The stroke is meant to run a little past the type, like a marker would. */
+  overflow: visible;
+  color: var(--ink);
+}
+
+.stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Deliberately NOT vector-effect: non-scaling-stroke. It would pin the nib to a fixed
+     number of screen pixels, which is wrong twice over at this size: the line wants to get
+     heavier with the type, and the dash the draw-on animation runs on is measured in user
+     units by pathLength="1" while non-scaling-stroke measures the path in screen units — so
+     above about 1600px the dash ran out and the stroke stopped drawing two thirds of the way
+     along the words. Scaling the stroke with the box makes both correct at once: the widths
+     below are user units, and the box scales by the same factor in x and y. */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.85s cubic-bezier(0.32, 0.9, 0.36, 1);
+}
+
+/* User units. The box is scaled by the lead's width over the viewBox's 620, so 12 lands
+   at about 0.083 x --lead on screen at every size — a felt-tip nib under a 176px Geist
+   800, not the hairline this was (7.3 rendered thinner than the type's own stems and
+   read as a ruled line with a smudge under it). */
+.strokeMain {
+  stroke-width: 12;
+}
+
+/* Nearly full ink: at 0.55 the second pass read as the first one's drop shadow. It is a
+   stroke of the same pen, so it is the same black — it tells itself apart by being
+   shorter and by leaving the first line, not by being faint. */
+.strokeGhost {
+  stroke-width: 6.5;
+  opacity: 0.8;
+}
+
+.wrap[data-shown] .stroke {
+  stroke-dashoffset: 0;
+}
+
+/* Last in: the words arrive, the sign lands on them, then the marker goes under. */
+.wrap[data-shown] .strokeMain {
+  transition-delay: 0.86s;
+}
+
+/* The second pass chases the first. It is shorter, so it is quicker.
+
+   It used to breathe on a 7s loop afterwards. That was right for a faint ghost and wrong
+   for what this now is: dried ink does not pulse, and once the stroke carries real weight
+   the loop reads as a rendering fault rather than as life — on a card whose whole point,
+   by this beat, is to have settled. Dropping it also leaves the hero with nothing
+   animating forever behind the reader. */
+.wrap[data-shown] .strokeGhost {
+  transition-delay: 1.18s;
+  transition-duration: 0.6s;
+}
+
+/* ------------------------------------------------------------------ upright boxes
+   The portrait moves above the sentence, which hands the whole band to the type — so the
+   lead and the sign can take the full width rather than two thirds of it.
+
+   A container query on the band's own shape, not a width breakpoint: what decides this is
+   whether the band is wide or tall, and a 390px phone, a tablet held upright and a 900px
+   square window all want the stack for the same reason, while 1440x700 wants the row. */
+@container (aspect-ratio < 1.25) {
+  .block {
+    --w: min(96cqi, 65cqb);
+    --col: var(--w);
+    --lead: calc(var(--col) * 0.192);
+    /* A shade larger than the row layout's 0.225 rather than smaller, because the plaque
+       is now pinned to the whole column here (see .sign below) instead of hugging the
+       name. At 0.214 the word filled 0.79 of the frame and the sign read airy on a phone;
+       this puts it back to the 0.85 the desktop composition has. The extra height is
+       ~0.034 x --col, which the stack has to spare — it is width-bound at 320 and 390,
+       and the shortest band that reaches this layout (768x1024) keeps a 38px gap to both
+       the nav and the caption row. */
+    --sign: calc(var(--col) * 0.232);
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    row-gap: calc(var(--lead) * 0.3);
+  }
+
+  /* Standing above the sentence the portrait is the only thing here that can use the height
+     the stack leaves over, so it is sized directly rather than stretched to a neighbour. */
+  .portrait {
+    width: calc(var(--col) * 0.62);
+    aspect-ratio: 1;
+  }
+
+  .name {
+    justify-self: stretch;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .lead {
+    margin-inline: auto;
+  }
+
+  /* The one item here that must NOT shrink to its contents. `justify-items: center` above
+     is what centres the lead, but it also let the plaque size itself from its widest
+     child — and its widest child is the name in a webfont. So until Permanent Marker
+     arrived the frame was drawn at the fallback's width and then resized under the
+     reader: a real layout shift on exactly the devices where the stack layout applies
+     (0.0019 at 390x844, 0.0022 at 320x640, and a 21px jump in the frame's width).
+     Stretching the lane pins the plaque to the text column instead, which is what the
+     row layout has always done — the frame is now the same box before and after the font
+     lands at every size, and only the letters inside it change. */
+  .sign {
+    justify-self: stretch;
+  }
+}
+
+/* ------------------------------------------------------------------ reduced motion
+   Everything renders settled: no fade, no slap, no drawn line. */
+@media (prefers-reduced-motion: reduce) {
+  .portrait,
+  .lead,
+  .sign .plaque,
+  .stroke {
+    transition: none;
+  }
+}

@@ -1,0 +1,39 @@
+/* The landmark itself stays untransformed, so it is safe to position things inside it. */
+.card {
+  position: relative;
+  z-index: 1;
+  scroll-margin-top: var(--inset);
+}
+
+.card:focus {
+  outline: none;
+}
+
+.plate {
+  padding: var(--pad);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  container-type: inline-size;
+  transform: scale(0.94);
+  transform-origin: 50% 0%;
+  transition: transform 1.1s var(--ease-out);
+}
+
+.plate[data-settled] {
+  transform: none;
+}
+
+/* Named timeline the section head's reading-progress rule animates against. */
+@supports (view-timeline-name: --section-view) {
+  .plate {
+    view-timeline-name: --section-view;
+    view-timeline-axis: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plate {
+    transform: none;
+  }
+}

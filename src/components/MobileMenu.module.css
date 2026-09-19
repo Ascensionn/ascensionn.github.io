@@ -1,0 +1,180 @@
+.overlay {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  padding: var(--inset);
+  background: var(--outer);
+  color: var(--ink);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.35s var(--ease-out),
+    visibility 0.35s;
+}
+
+.overlay[data-open] {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* The panel sits exactly where the hero card sits, so Menu/Close feel like one control. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--hero-pad);
+  border-radius: var(--radius);
+  background: var(--card);
+  overflow: auto;
+  overscroll-behavior: contain;
+  clip-path: inset(0 0 100% 0 round var(--radius));
+  transition: clip-path 0.6s var(--ease-out);
+}
+
+.overlay[data-open] .panel {
+  clip-path: inset(0 0 0 0 round var(--radius));
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Fills the band under the running head that would otherwise read as dead space. */
+.tagline {
+  max-width: 18ch;
+  margin-top: clamp(20px, 4.5vh, 40px);
+  font-size: clamp(19px, 5.4vw, 26px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--muted);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  padding-block: clamp(20px, 4vh, 36px) 0;
+}
+
+/* The three rows share the whole remaining height, so the hairlines are evenly spaced
+   and the panel has no pooled void above the links. */
+.links {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-top: 1px solid var(--line);
+}
+
+.item {
+  flex: 1;
+  display: flex;
+  /* Each word sits on its own rule, the way an index page sets its entries. */
+  align-items: flex-end;
+  min-height: 3.2rem;
+  border-bottom: 1px solid var(--line);
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.5s var(--ease-out),
+    transform 0.6s var(--ease-out);
+  transition-delay: calc(0.14s + var(--i) * 0.06s);
+}
+
+.overlay[data-open] .item {
+  opacity: 1;
+  transform: none;
+}
+
+.link {
+  /* Declared here so the index can offset itself against the word's size. */
+  --word-size: clamp(44px, 15vw, 88px);
+  display: flex;
+  align-items: baseline;
+  gap: 1.2ch;
+  width: 100%;
+  padding: 10px 12px 6px;
+  margin-inline: -12px;
+  border-radius: 12px;
+  transition: background-color 0.18s var(--ease-out);
+}
+
+/* The same "press me" cue the pills give, at the scale of an index entry:
+   the whole row lights up rather than only the word picking up an underline. */
+.link:hover,
+.link:focus-visible {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.link:active {
+  background: color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
+/* Both labels sit on one baseline; lifting the index by the difference in cap heights
+   (Geist's cap height is ~0.72em) sets its cap level with the big word's cap. */
+.index {
+  flex: none;
+  color: var(--muted);
+  transform: translateY(calc(-0.72 * (var(--word-size) - var(--label-size))));
+}
+
+.mask {
+  display: block;
+  overflow: clip;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.word {
+  display: block;
+  font-size: var(--word-size);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.link:hover .word,
+.link:focus-visible .word {
+  text-decoration: underline;
+  text-decoration-thickness: 0.04em;
+  text-underline-offset: 0.1em;
+}
+
+.link:hover .index,
+.link:focus-visible .index {
+  color: var(--ink);
+}
+
+.bottom {
+  display: grid;
+  gap: 14px;
+  padding-top: clamp(22px, 4vh, 36px);
+}
+
+.controls,
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .panel,
+  .item,
+  .link {
+    transition: none;
+  }
+}

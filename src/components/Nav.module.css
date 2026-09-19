@@ -1,0 +1,77 @@
+.nav {
+  position: relative;
+  /* Above the canvas at every phase of the intro — the art never crosses a label. */
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  /* Buttons are boxes, so they line up on their centres rather than on a baseline. */
+  align-items: center;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px clamp(6px, 0.7vw, 10px);
+}
+
+/* The five groups start on columns 1, 4, 7 and 10; Contact hugs the right edge. */
+.brand {
+  grid-column: 1 / 4;
+  justify-self: start;
+  font-weight: 600;
+}
+
+.sections {
+  grid-column: 4 / 7;
+}
+
+.controls {
+  grid-column: 7 / 10;
+}
+
+.clock {
+  grid-column: 10 / 12;
+  white-space: nowrap;
+}
+
+.contact {
+  grid-column: 12 / 13;
+  justify-self: end;
+}
+
+/* Doubled class names below: these have to beat Pill's own `display`, and the two
+   CSS modules are separate files whose order in the bundle is not ours to decide. */
+.menuButton.menuButton {
+  display: none;
+}
+
+@media (max-width: 1023.98px) {
+  .clock {
+    display: none;
+  }
+
+  .controls {
+    grid-column: 7 / 12;
+  }
+}
+
+@media (max-width: 759.98px) {
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sections,
+  .controls,
+  .contact.contact {
+    display: none;
+  }
+
+  .menuButton.menuButton {
+    display: inline-flex;
+  }
+}

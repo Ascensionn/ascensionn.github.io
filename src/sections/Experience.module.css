@@ -1,0 +1,229 @@
+/* ------------------------------------------------------------------ title */
+.title {
+  margin-top: clamp(48px, 9cqi, 180px);
+  font-size: clamp(44px, 15cqi, 240px);
+  font-weight: 500;
+  line-height: 0.86;
+  letter-spacing: -0.06em;
+}
+
+/* ------------------------------------------------------------------ index list */
+.columns {
+  display: none;
+  margin-top: clamp(48px, 7cqi, 120px);
+  padding-bottom: 12px;
+  color: var(--muted);
+}
+
+.list {
+  margin-top: clamp(40px, 8cqi, 80px);
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  /* Narrow: the company name gets the whole measure, and the link closes the entry underneath
+     the summary. Sharing the top row with the link squeezed long names into two ragged lines. */
+  grid-template-columns: 3.5ch minmax(0, 1fr);
+  grid-template-areas:
+    'num company'
+    '. summary'
+    '. visit';
+  column-gap: 12px;
+  row-gap: 12px;
+  align-items: center;
+  padding-block: 22px;
+  border-bottom: 1px solid var(--line);
+  transition:
+    color 0.35s var(--ease-out),
+    border-color 0.35s var(--ease-out);
+}
+
+/* Inverted pill that opens from the middle. Only rows that actually link anywhere get it —
+   inverting a row you cannot click is a promise the page does not keep. */
+.row::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1px calc(-1 * min(var(--pad), 14px));
+  border-radius: 12px;
+  background: var(--ink);
+  clip-path: inset(50% 0 50% 0 round 12px);
+  transition: clip-path 0.5s var(--ease-out);
+}
+
+.num {
+  grid-area: num;
+  color: var(--muted);
+  transition: color 0.35s var(--ease-out);
+}
+
+.company {
+  grid-area: company;
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.4cqi, 20px);
+  min-width: 0;
+}
+
+/* The turning mark. Its canvas is absolutely positioned inside this box by the engine, so
+   the box must carry the size itself — that way the row is laid out at its final height on
+   the first paint and nothing moves when the logo finishes decoding. */
+.logo {
+  position: relative;
+  flex: none;
+  /* The floor is what a 320px card can spare beside a long company name: any wider and
+     "HERE Technologies" pushes past the card's content edge. */
+  width: clamp(92px, 12.2cqi, 176px);
+  aspect-ratio: 1;
+  /* The engine bakes its glyph atlas in this colour. Fixed to the resting ink rather
+     than currentColor, because the row's own colour animates and the atlas is not
+     re-baked per frame — the hover state is handled by the filter below instead. */
+  --ascii-ink: var(--ink);
+  /* Inverting the canvas is what carries the mark across the row's inversion, and it
+     works in both themes without a second atlas: light ink turns dark, dark turns
+     light, and transparent cells keep their alpha so nothing boxes the mark in. */
+  transition: filter 0.45s var(--ease-out);
+}
+
+.name {
+  font-size: clamp(22px, 3.2cqi, 64px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
+.summary {
+  grid-area: summary;
+  max-width: 46ch;
+  color: var(--muted);
+  font-size: clamp(15px, 1.2cqi, 22px);
+  line-height: 1.45;
+  transition: color 0.35s var(--ease-out);
+}
+
+.visit {
+  grid-area: visit;
+  justify-self: start;
+  /* Padded to clear the 24px minimum target; the stretched ::after makes the whole row clickable anyway. */
+  padding-block: 6px;
+  margin-block: -6px;
+  white-space: nowrap;
+  text-transform: none;
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 0.45s var(--ease-out);
+}
+
+.row:has(.visit):hover .arrow,
+.visit:focus-visible .arrow {
+  transform: translate(2px, -2px);
+}
+
+/* The whole row is the click target for rows that have a link. */
+.visit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.visit:focus-visible {
+  outline: none;
+}
+
+/* Keyboard focus inverts the row too, with a light ring inside the pill. */
+.row:has(.visit:focus-visible)::before {
+  clip-path: inset(0 0 0 0 round 12px);
+  outline: 2px solid var(--card);
+  outline-offset: -6px;
+}
+
+.row:has(.visit:focus-visible) {
+  color: var(--card);
+}
+
+/* Linked row: the full inversion. */
+.row:has(.visit):hover::before {
+  clip-path: inset(0 0 0 0 round 12px);
+}
+
+.row:has(.visit):hover,
+.row:has(.visit):hover .num {
+  color: var(--card);
+}
+
+.row:has(.visit):hover .summary {
+  color: color-mix(in srgb, var(--card) 74%, var(--ink));
+}
+
+/* The mark rides the inversion: only rows that actually invert flip their mark. */
+.row:has(.visit):hover .logo,
+.row:has(.visit:focus-visible) .logo {
+  filter: invert(1);
+}
+
+/* Rows with nowhere to go answer more quietly: the hairline below them darkens, nothing inverts. */
+.row:not(:has(.visit)):hover {
+  border-bottom-color: var(--ink);
+}
+
+.row:has(.visit:focus-visible) .num,
+.row:has(.visit:focus-visible) .summary {
+  color: color-mix(in srgb, var(--card) 74%, var(--ink));
+}
+
+/* ------------------------------------------------------------------ wide: one line per company */
+@container (min-width: 880px) {
+  .title {
+    font-size: 15cqi;
+  }
+
+  .columns,
+  .row {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-areas: none;
+    column-gap: var(--gutter);
+  }
+
+  .list {
+    margin-top: 0;
+  }
+
+  .row {
+    padding-block: clamp(24px, 2.6cqi, 44px);
+  }
+
+  .num,
+  .company,
+  .summary,
+  .visit {
+    grid-row: 1;
+  }
+
+  .num,
+  .columns > :first-child {
+    grid-column: 1 / 2;
+  }
+
+  .company,
+  .colCompany {
+    grid-column: 2 / 7;
+  }
+
+  .summary,
+  .colSummary {
+    grid-column: 7 / 11;
+  }
+
+  /* Two columns, so the host name has room to sit on one line against the right edge. */
+  .visit,
+  .colLink {
+    grid-column: 11 / 13;
+    justify-self: end;
+  }
+}

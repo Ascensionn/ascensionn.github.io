@@ -1,0 +1,96 @@
+/* ------------------------------------------------------------------
+   The one button shape the site uses: a bordered, opaque capsule that
+   inverts on hover and focus.
+
+   The hero's nav sits on top of a running ASCII field, so a button there
+   cannot be a bare label — the pattern reads straight through it and it
+   stops looking clickable. Every nav item therefore carries its own ink
+   border and an opaque card-coloured fill, and lifts to solid ink the
+   moment it is hovered or focused.
+
+   Two custom properties do the theming, so the same class works on the
+   card (ink on paper) and inside the dark floating bar (paper on ink):
+     --pill-ink    the border + label colour at rest, the fill when active
+     --pill-paper  the fill at rest, the label colour when active
+   ------------------------------------------------------------------ */
+
+.pill {
+  --pill-ink: var(--ink);
+  --pill-paper: var(--card);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6ch;
+  /* 28px clears the 24px minimum target of WCAG 2.2 SC 2.5.8 without
+     touching the 11px type the whole nav is set in. */
+  min-height: 28px;
+  padding: 6px 12px;
+  border: 1px solid var(--pill-ink);
+  border-radius: 999px;
+  background: var(--pill-paper);
+  color: var(--pill-ink);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.16s var(--ease-out),
+    color 0.16s var(--ease-out),
+    border-color 0.16s var(--ease-out),
+    transform 0.16s var(--ease-out);
+}
+
+.pill:hover,
+.pill:focus-visible,
+.pill[aria-current='true'] {
+  background: var(--pill-ink);
+  color: var(--pill-paper);
+  border-color: var(--pill-ink);
+}
+
+.pill:active {
+  transform: translateY(1px);
+}
+
+/* The global ring is ink at 3px offset; keep it, but make sure it never
+   lands under a neighbouring pill by pulling the offset in slightly. */
+.pill:focus-visible {
+  outline: 2px solid var(--pill-ink);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------
+   The same capsule worn by something you cannot press.
+
+   The hero's caption row — the job title, the city, the intro timecode —
+   sits on the same running field the nav does, so those labels need the
+   outline just as much. What they must not do is pose as controls: no
+   pointer cursor, no inversion under the pointer, no press. They are also
+   plain <span>s and <p>s, so nothing about them is focusable either.
+   ------------------------------------------------------------------ */
+.static {
+  cursor: default;
+}
+
+.pill.static:hover {
+  background: var(--pill-paper);
+  color: var(--pill-ink);
+  border-color: var(--pill-ink);
+}
+
+.pill.static:active {
+  transform: none;
+}
+
+/* A pill is already a comfortable target; on touch give it a little more. */
+@media (pointer: coarse) {
+  .pill {
+    min-height: 34px;
+    padding-inline: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill {
+    transition: none;
+  }
+}

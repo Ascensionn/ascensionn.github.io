@@ -1,0 +1,122 @@
+.footer {
+  padding-top: clamp(40px, 6cqi, 96px);
+}
+
+/* ------------------------------------------------------------------ the wordmark
+   His name, solid and heavy, spanning the card — the panel's original closing gesture. The word
+   never changes; what changes is the type it is set in, continuously, on the same component the
+   About statement uses (src/components/TypeCycle.tsx).
+
+   There is no colour in this file and no [data-scheme] rule. The panel used to redefine the
+   card's own tokens on a timer — four monochrome looks, cut hard between them — and the owner
+   asked for the flipping to go. It is gone: the card is --ink on --card here exactly as every
+   other card is, in both themes, in every frame.
+
+   The divisor is the wordmark's ink width in em, measured in the browser by build/about-fit.mjs:
+   "Andy He" is 3.750em of Geist 800 at this tracking. 3.86 is that plus 3% of slack, which keeps
+   the name off the card's edge and covers a first paint where Geist has not arrived and a
+   fallback is setting the line. */
+.wordmark {
+  font-size: calc(100cqi / 3.86);
+}
+
+/* Phones: the name breaks to two lines, on the newline TypeCycle authors into the text, and the
+   measure to fit becomes the longest token. "Andy" is 2.374em; 2.44 is that plus the same slack.
+   TypeCycle's own phone block is what makes the slot two lines tall, so the break costs nothing. */
+@container (max-width: 520px) {
+  .wordmark {
+    font-size: calc(100cqi / 2.44);
+  }
+
+  /* The rule below has to clear the deepest descender in the specimen, and .bar's own margin —
+     clamp(20px, 3cqi, 44px) — never reaches 20px on a card this narrow, so across the whole
+     two-line range the gap is a flat 20px while the display size more than doubles. Measured
+     (build/c4-ink.mjs, real glyph metrics of every face against the word): a Times-italic "y"
+     came within a few pixels of the rule at the top of the range. Tying the gap to the card
+     instead of to a floor keeps it proportional, and the 20px floor still wins below a 364px
+     card so the smallest phones lose nothing.
+
+     Doubled class: a container query adds no specificity, and .bar's own margin is declared
+     further down the file, so a plain .bar in here would lose to it. */
+  .bar.bar {
+    margin-top: max(20px, 5.5cqi);
+  }
+}
+
+/* ------------------------------------------------------------------ meta bar */
+.bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px var(--gutter);
+  align-items: baseline;
+  /* Tighter than the rest of the stack: the deepest descender in the specimen already reaches
+     down into this gap, and the rule has to clear it in every face. */
+  margin-top: clamp(20px, 3cqi, 44px);
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+/* Everything in this bar that can be clicked carries a hairline under it at rest, so the links
+   are apparent without needing a hover — the static readouts beside them stay bare. The global
+   .chip is only a backing plate, and it inverts on hover, which paints over this line. */
+.bar :global(a.chip) {
+  background-image: linear-gradient(color-mix(in srgb, var(--ink) 45%, transparent), color-mix(in srgb, var(--ink) 45%, transparent));
+  background-repeat: no-repeat;
+  background-position: 7px calc(100% - 5px);
+  background-size: calc(100% - 14px) 1px;
+}
+
+.social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px clamp(14px, 1.5vw, 26px);
+  justify-self: end;
+}
+
+.copyright,
+.clock {
+  color: var(--muted);
+}
+
+.email {
+  justify-self: start;
+}
+
+.top {
+  justify-self: end;
+}
+
+.clock {
+  display: none;
+}
+
+/* Wide: same five-group rhythm as the hero nav. */
+@container (min-width: 880px) {
+  .bar {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .copyright {
+    grid-column: 1 / 4;
+  }
+
+  .social {
+    grid-column: 4 / 7;
+    justify-self: start;
+  }
+
+  .email {
+    grid-column: 7 / 10;
+  }
+
+  .clock {
+    display: block;
+    grid-column: 10 / 12;
+    white-space: nowrap;
+  }
+
+  .top {
+    grid-column: 12 / 13;
+    white-space: nowrap;
+  }
+}

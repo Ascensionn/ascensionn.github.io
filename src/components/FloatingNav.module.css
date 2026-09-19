@@ -1,0 +1,95 @@
+.wrap {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  bottom: max(var(--inset), env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  padding-inline: var(--inset);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(calc(100% + var(--inset)));
+  transition:
+    opacity 0.35s var(--ease-out),
+    transform 0.5s var(--ease-out);
+}
+
+.wrap[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Ink on card, the same inversion the experience rows use. Being the one dark object on the page
+   it reads as a layer floating over the cards rather than a hole cut out of one. */
+.bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1vw, 14px);
+  max-width: 100%;
+  padding: 8px clamp(10px, 1vw, 14px);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--card);
+  box-shadow: 0 16px 38px -20px rgba(0, 0, 0, 0.7);
+}
+
+/* Same pills as the hero, with the two colours swapped: the bar's own ink is the
+   "paper" they sit on, so an active pill fills with card and reads as a lit key. */
+.bar a,
+.bar button {
+  --pill-ink: var(--card);
+  --pill-paper: var(--ink);
+}
+
+.brand {
+  font-weight: 600;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 0.8vw, 10px);
+  padding-left: clamp(8px, 1vw, 14px);
+  border-left: 1px solid color-mix(in srgb, var(--card) 26%, transparent);
+}
+
+/* The section you are in is filled like a hovered pill, so the underline is what
+   tells the two apart at a glance. */
+.links a[aria-current] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.theme {
+  margin-left: clamp(8px, 1vw, 14px);
+}
+
+.menuButton.menuButton {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wrap {
+    transition: none;
+  }
+}
+
+/* Phones: brand plus the same Menu button the hero uses. */
+@media (max-width: 759.98px) {
+  .bar {
+    flex: 1;
+    justify-content: space-between;
+  }
+
+  .links,
+  .theme.theme {
+    display: none;
+  }
+
+  .menuButton.menuButton {
+    display: inline-flex;
+  }
+}
