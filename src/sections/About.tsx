@@ -49,7 +49,6 @@ export function About() {
           <span className={styles.school}>
             {study.school}
             {/* A fact he gave, not an inference — and the only thing marking the row as unfinished. */}
-            {study.inProgress ? ' (in progress)' : null}
           </span>
         </>
       ),

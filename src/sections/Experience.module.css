@@ -146,29 +146,25 @@
   color: var(--card);
 }
 
-/* Linked row: the full inversion. */
-.row:has(.visit):hover::before {
+/* Every row inverts on hover — the owner wants the same highlight on all four. Only the rows
+   with a .visit link actually go anywhere; the rest simply light up. */
+.row:hover::before {
   clip-path: inset(0 0 0 0 round 12px);
 }
 
-.row:has(.visit):hover,
-.row:has(.visit):hover .num {
+.row:hover,
+.row:hover .num {
   color: var(--card);
 }
 
-.row:has(.visit):hover .summary {
+.row:hover .summary {
   color: color-mix(in srgb, var(--card) 74%, var(--ink));
 }
 
-/* The mark rides the inversion: only rows that actually invert flip their mark. */
-.row:has(.visit):hover .logo,
+/* The mark rides the inversion. */
+.row:hover .logo,
 .row:has(.visit:focus-visible) .logo {
   filter: invert(1);
-}
-
-/* Rows with nowhere to go answer more quietly: the hairline below them darkens, nothing inverts. */
-.row:not(:has(.visit)):hover {
-  border-bottom-color: var(--ink);
 }
 
 .row:has(.visit:focus-visible) .num,
