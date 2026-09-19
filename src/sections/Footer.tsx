@@ -18,8 +18,13 @@ export function Footer({ ref }: { ref?: Ref<HTMLElement> }) {
       {/* The rotating "I am a …" that used to live here has moved into About, where it is part
           of a sentence. What stays is the panel's original job — the wordmark — and the type
           audition it wears, which is now the same component About's statement uses. No scheme
-          flipping: the card is ink on card in both themes, in every frame. */}
-      <TypeCycle words={WORDMARK} stack className={styles.wordmark} />
+          flipping: the card is ink on card in both themes, in every frame.
+
+          size="fixed" is the one thing it does differently from the statement. The face changes
+          continuously; the SIZE does not, because a wordmark that spans the card is the whole
+          closing gesture and a specimen ladder kept taking it down to half the measure, where it
+          read as a leftover rather than as a sign-off. */}
+      <TypeCycle words={WORDMARK} stack size="fixed" className={styles.wordmark} />
 
       <div className={`label ${styles.bar}`}>
         <p className={styles.copyright}>

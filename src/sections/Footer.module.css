@@ -5,7 +5,10 @@
 /* ------------------------------------------------------------------ the wordmark
    His name, solid and heavy, spanning the card — the panel's original closing gesture. The word
    never changes; what changes is the type it is set in, continuously, on the same component the
-   About statement uses (src/components/TypeCycle.tsx).
+   About statement uses (src/components/TypeCycle.tsx). The SIZE does not change, which is the
+   one setting this block does differently from the statement: see size="fixed" in Footer.tsx.
+   Spanning the card is the gesture, so the divisor below has to be the measure the name actually
+   reaches in every face, not an upper bound it only sometimes touches.
 
    There is no colour in this file and no [data-scheme] rule. The panel used to redefine the
    card's own tokens on a timer — four monochrome looks, cut hard between them — and the owner

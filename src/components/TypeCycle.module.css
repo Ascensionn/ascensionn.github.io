@@ -27,7 +27,12 @@
   /* The size half of the audition, as a multiplier on the fitted size, and the baseline it
      pivots about. TypeCycle's SIZES ladder writes the first; faces.ts measures the second and
      REST_SPECIMEN's value is duplicated here as the default (REST_TOP + 0.9). Every rung of the
-     ladder is <= 1, so the word can only ever be smaller than the box already reserved for it. */
+     ladder is <= 1, so the word can only ever be smaller than the box already reserved for it.
+
+     A caller passing size="fixed" — the closing wordmark — never has --mark-size written at all,
+     so this 1 stands for its whole run and the name is always as large as the face will go. That
+     is the difference between a word being auditioned inside a sentence and a wordmark whose job
+     is to span the card. */
   --mark-size: 1;
   --mark-base: 0.8;
 
@@ -88,7 +93,15 @@
 /* The reserved box. 0.92em is the height that holds the specimen — the shared baseline lands
    ~0.78em down, and no fitted face's descender falls more than 0.063em past the box
    (build/face-metrics.mjs, build/ink-bounds.mjs). The word inside is out of flow, so neither a
-   longer word nor a swapped typeface nor a smaller size can move anything below it. */
+   longer word nor a swapped typeface nor a smaller size can move anything below it.
+
+   This is the box that must never move, and it does not. Sampled every 100ms through a 30s run
+   at each width (build/cycle-cls.mjs): one slot rect, one meta-bar position, one document
+   height, for both blocks. What the browser still scores is the word's own ink — glyphs of
+   different shapes genuinely occupy different rects — and that comes to a session CLS of 0.005
+   for the statement and 0.032 for the closing wordmark, both inside the 0.1 "good" line. The
+   wordmark's is the larger only because it is the larger element: same mechanism, same number
+   of swaps, four times the area of the viewport covered. */
 .slot {
   display: block;
   position: relative;

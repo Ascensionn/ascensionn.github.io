@@ -13,9 +13,19 @@ import styles from './TypeCycle.module.css'
  *  - The closing panel sets one fixed word — the "Andy He" wordmark — which never changes.
  *
  * What moves is TYPE, and only type. The word is auditioned continuously: a new face every third
- * of a second or so, and with it a new size, the way a designer flicks through options with the
- * specimen on screen. Weight, width and slant come along with the face, because each candidate in
- * src/lib/faces.ts carries its own.
+ * of a second or so, the way a designer flicks through options with the specimen on screen.
+ * Weight, width and slant come along with the face, because each candidate in src/lib/faces.ts
+ * carries its own.
+ *
+ * SIZE is auditioned too, but only where the block is a word inside a sentence — About's
+ * statement, which is what the owner was looking at when he asked for the type to keep changing
+ * size. The closing panel opts out (`size="fixed"`), because a wordmark's whole gesture is
+ * spanning the card: measured over 30s (build/k5-extent.mjs) the ladder swung his name between
+ * 52% and 98% of the card's measure, and the frames at the bottom of that range read as a name
+ * that had lost its nerve rather than as a closing mark. With the ladder off, nine of the twelve
+ * faces set it to exactly the full measure and the three that do not (Helvetica, Arial Narrow,
+ * Impact) are narrow by their own design at the same cap height, which is the typography being
+ * honest rather than the block zooming.
  *
  * What does NOT move:
  *
@@ -56,7 +66,7 @@ const STEP_MIN = 340
 const STEP_MAX = 520
 
 /**
- * The size ladder, as multipliers on the fitted size.
+ * The size ladder, as multipliers on the fitted size. Used where `size` is 'audition'.
  *
  * `fit` in faces.ts deliberately sets every face to the same ink width — that is what stops a
  * swap reflowing the sentence — so without this the specimen would change shape and never size.
@@ -79,6 +89,8 @@ type Options = {
   suffix: string
   /** The word the block rests on, and where the loop starts. */
   start: number
+  /** False pins the specimen at its fitted size and auditions the face alone. */
+  sizing: boolean
   /** prefers-reduced-motion or a static capture: one word, one face, nothing running. */
   skip: boolean
   loop: boolean
@@ -93,7 +105,7 @@ function other(length: number, current: number): number {
 }
 
 /** Returns the index of the word the block should be showing. */
-function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, start, skip, loop }: Options): number {
+function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, start, sizing, skip, loop }: Options): number {
   const [index, setIndex] = useState(start)
   // The effect drives the rotation on timers and must not be torn down and rebuilt on every
   // tick, so its own cursor lives in a ref and the state is only what React renders from.
@@ -115,6 +127,19 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
     let upFront = document.visibilityState === 'visible'
     const hold = loop ? LOOP_HOLD : HOLD
 
+    /* The word's hold is BANKED, not restarted.
+       `holdLeft` is how much of the current word's two seconds is still owed, and `armedAt` is
+       when the timer running it was last set. A pause spends what has elapsed and keeps the rest;
+       resuming schedules only the remainder. Restarting the full hold instead looks harmless and
+       is not: the block pauses whenever it leaves the observer, an ordinary scroll crosses that
+       line repeatedly, and every crossing put the word back on a fresh two seconds. Measured with
+       build/k5-stall.mjs — a slow scroll up and down past the statement stretched the gaps to
+       4.0s and then 4.6s, and a faster one held one word for nine seconds while the typeface went
+       on changing underneath it, which reads as the rotation having broken. Banking the remainder
+       makes the hold two seconds OF BEING WATCHED, which is what it was always meant to be. */
+    let holdLeft = hold
+    let armedAt = 0
+
     const setFace = (face: FittedFace) => {
       mark.style.setProperty('--mark-family', face.family)
       mark.style.setProperty('--mark-weight', String(face.weight))
@@ -132,12 +157,18 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
       for (const name of MARK_VARS) mark.style.removeProperty(`--mark-${name}`)
     }
 
-    /** One decision: a face that is not the current one, and a size that is not the current one. */
+    /**
+     * One decision: a face that is not the current one, and — where the block auditions size —
+     * a rung of the ladder that is not the current one. With `sizing` off, --mark-size is never
+     * written at all, so the stylesheet's own 1 stands and the specimen is always as large as its
+     * face will go inside the reserved box.
+     */
     const audition = () => {
       if (faces.length > 1) {
         faceIndex = other(faces.length, faceIndex)
         setFace(faces[faceIndex])
       }
+      if (!sizing) return
       sizeIndex = other(SIZES.length, sizeIndex)
       mark.style.setProperty('--mark-size', SIZES[sizeIndex].toFixed(4))
     }
@@ -171,6 +202,13 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
       faceIndex = 0
     }
 
+    /** Runs the rest of this word's hold, from now. */
+    const armWord = (ms: number) => {
+      holdLeft = ms
+      armedAt = performance.now()
+      wordTimer = window.setTimeout(wordTick, ms)
+    }
+
     const wordTick = () => {
       wordTimer = 0
       if (!alive) return
@@ -179,7 +217,7 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
       // the frame it arrives, and this also keeps the two timers from beating against each other.
       window.clearTimeout(typeTimer)
       typeTick()
-      wordTimer = window.setTimeout(wordTick, hold)
+      armWord(hold)
     }
 
     const run = () => {
@@ -187,18 +225,34 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
       running = true
       typeTick()
       // One word — the closing panel's wordmark — cycles type and nothing else.
-      if (words.length > 1) wordTimer = window.setTimeout(wordTick, hold)
+      if (words.length > 1) armWord(holdLeft)
     }
 
+    /**
+     * Stop, without forgetting anything.
+     *
+     * It deliberately does NOT call clearType(). Resetting the specimen to the stylesheet's Geist
+     * on every pause looks like tidying up and is visible: the observer lets go while the block
+     * is still partly on screen, so scrolling past the statement snapped the word back to the
+     * resting face in plain sight (21 such frames in a single scroll, build/k5-stall.mjs). Off
+     * screen there is nothing to tidy, and the effect's own teardown below still clears it.
+     */
     const halt = () => {
+      if (!running) return
       running = false
       window.clearTimeout(typeTimer)
       typeTimer = 0
-      window.clearTimeout(wordTimer)
-      wordTimer = 0
-      clearType()
+      if (wordTimer) {
+        holdLeft = Math.max(0, holdLeft - (performance.now() - armedAt))
+        window.clearTimeout(wordTimer)
+        wordTimer = 0
+      }
     }
 
+    /* threshold 0, not 0.2. The thing being avoided is work no one can see, so the test is
+       whether any of the block is on screen at all. A fifth of a 140px statement is 28px, and a
+       card this tall crosses that line in the middle of an ordinary scroll — which used to mean
+       the type stopped changing while the word was still being read. */
     const observer = new IntersectionObserver(
       (entries) => {
         const next = entries.some((entry) => entry.isIntersecting)
@@ -207,7 +261,7 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
         if (next) run()
         else halt()
       },
-      { threshold: 0.2 },
+      { threshold: 0 },
     )
     observer.observe(mark)
 
@@ -236,7 +290,7 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
       window.clearTimeout(wordTimer)
       clearType()
     }
-  }, [rootRef, words, suffix, skip, loop])
+  }, [rootRef, words, suffix, sizing, skip, loop])
 
   return index
 }
@@ -259,15 +313,23 @@ type Props = {
    * sentence; see the block at the foot of TypeCycle.module.css.
    */
   stack?: boolean
+  /**
+   * 'audition' (the default) changes the specimen's size as well as its face, which is what the
+   * statement does: the word is one element inside a sentence, and trying it larger and smaller
+   * reads as type being chosen. 'fixed' keeps every face at the largest size that fits the
+   * reserved box and changes only the letterforms — what the closing wordmark takes, because a
+   * name that spans the card IS the gesture and shrinking it undoes the gesture.
+   */
+  size?: 'audition' | 'fixed'
   /** The consumer's own class, carrying the display size. */
   className?: string
 }
 
-export function TypeCycle({ words, resting, lead, tail, suffix = '', stack, className }: Props) {
+export function TypeCycle({ words, resting, lead, tail, suffix = '', stack, size = 'audition', className }: Props) {
   const rootRef = useRef<HTMLParagraphElement>(null)
   const still = useStillMode()
   const start = Math.max(0, resting ? words.indexOf(resting) : 0)
-  const index = useTypeCycle(rootRef, { words, suffix, start, skip: still, loop: MARK_LOOP })
+  const index = useTypeCycle(rootRef, { words, suffix, start, sizing: size === 'audition', skip: still, loop: MARK_LOOP })
   const word = words[index]
 
   /* The word and its punctuation are ONE text node, with spaces written as newlines.
