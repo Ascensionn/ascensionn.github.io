@@ -57,12 +57,11 @@ const LOOP_HOLD = 700
  * Type change to type change, in ms, drawn uniformly from this range.
  *
  * The window matters more than the average. A fixed interval reads as a machine ticking; a range
- * this wide reads as a hand. Andy settled on 0.1s more per step than the original 340-520ms
- * window, so the mean is ~530ms: about four faces per word — quick enough to read as restless
- * auditioning, slow enough that each face registers.
+ * this wide reads as a hand. At ~430ms mean it is four or five faces per word — enough that the
+ * type is visibly being tried, few enough that every one of them can be read before it goes.
  */
-const STEP_MIN = 440
-const STEP_MAX = 620
+const STEP_MIN = 340
+const STEP_MAX = 520
 
 /**
  * The size ladder, as multipliers on the fitted size. Used where `size` is 'audition'.
