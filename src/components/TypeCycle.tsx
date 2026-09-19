@@ -170,11 +170,48 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, start, si
       mark.style.setProperty('--mark-size', SIZES[sizeIndex].toFixed(4))
     }
 
-    const typeTick = () => {
+    /**
+     * The type changes are laid out INSIDE the word's hold rather than run on a clock of their
+     * own. Two independent timers beat against each other: a face set 100ms before the word
+     * changed was painted for those 100ms and then thrown away with the word, which read as a
+     * flash rather than as a choice. So each word divides its remaining hold into equal steps —
+     * every face, including the last one, gets the same slice, and the last one ends exactly as
+     * the word changes.
+     *
+     * `remaining` is what is left of this word's hold, so a block that resumes mid-word fills the
+     * time it actually has instead of overrunning into the next word.
+     */
+    const planType = (remaining: number) => {
+      window.clearTimeout(typeTimer)
       typeTimer = 0
-      if (!alive) return
-      audition()
-      typeTimer = window.setTimeout(typeTick, STEP_MIN + Math.random() * (STEP_MAX - STEP_MIN))
+      // One word (the closing panel's wordmark) has no word clock to divide, so it free-runs.
+      if (words.length < 2) {
+        const freeTick = () => {
+          typeTimer = 0
+          if (!alive) return
+          audition()
+          typeTimer = window.setTimeout(freeTick, STEP_MIN + Math.random() * (STEP_MAX - STEP_MIN))
+        }
+        typeTimer = window.setTimeout(freeTick, STEP_MIN + Math.random() * (STEP_MAX - STEP_MIN))
+        return
+      }
+      // A hold that is nearly spent (a block resuming just before its word changes) gets no steps
+      // at all: one more face there would be seen for a moment and then thrown away with the word,
+      // which is the flash this scheduling exists to remove.
+      if (remaining < STEP_MAX * 1.5) return
+      const mean = (STEP_MIN + STEP_MAX) / 2
+      let count = Math.round(remaining / mean) - 1
+      if (count < 1) return
+      const gap = remaining / (count + 1)
+      let left = count
+      const tick = () => {
+        typeTimer = 0
+        if (!alive) return
+        audition()
+        left -= 1
+        if (left > 0) typeTimer = window.setTimeout(tick, gap)
+      }
+      typeTimer = window.setTimeout(tick, gap)
     }
 
     /**
@@ -210,17 +247,17 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, start, si
       wordTimer = 0
       if (!alive) return
       advance()
-      // Restart the type timer rather than letting it run on: a new word deserves a new face in
-      // the frame it arrives, and this also keeps the two timers from beating against each other.
-      window.clearTimeout(typeTimer)
-      typeTick()
+      // The new word arrives wearing a new face, and its own hold is divided from here.
+      audition()
+      planType(hold)
       armWord(hold)
     }
 
     const run = () => {
       if (!alive || running || !onScreen || !upFront || faces.length < 2) return
       running = true
-      typeTick()
+      // Fill only what is left of this word's hold, so resuming never overruns the next change.
+      planType(holdLeft)
       // One word — the closing panel's wordmark — cycles type and nothing else.
       if (words.length > 1) armWord(holdLeft)
     }
