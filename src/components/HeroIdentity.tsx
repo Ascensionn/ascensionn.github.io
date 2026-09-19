@@ -88,10 +88,10 @@ export function HeroIdentity({ shown }: Props) {
       <div className={styles.block}>
         <figure className={styles.portrait}>
           <img
-            src={person.portrait.src}
-            width={person.portrait.width}
-            height={person.portrait.height}
-            alt={person.portrait.alt}
+            src={person.heroPortrait.src}
+            width={person.heroPortrait.width}
+            height={person.heroPortrait.height}
+            alt={person.heroPortrait.alt}
             decoding="async"
             fetchPriority="high"
           />

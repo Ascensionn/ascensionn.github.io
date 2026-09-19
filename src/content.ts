@@ -1,5 +1,6 @@
 // Every fact on the site lives here. Edit this file to update copy, links, or experience.
 import meJpg from './assets/images/me.jpg'
+import heroPortraitJpg from './assets/images/portrait-hero.jpg'
 import scriberPng from './assets/images/scriber-mark.png'
 import tiktokPng from './assets/images/tiktok.png'
 import herePng from './assets/images/here.jpg'
@@ -45,6 +46,9 @@ export const person = {
   phoneHref: 'tel:+17349997893',
   github: 'https://github.com/Ascensionn',
   linkedin: 'https://www.linkedin.com/in/andy-he-6778241b1/',
+  /** The hero's closing beat — the suit photograph, first thing a visitor sees. */
+  heroPortrait: { src: heroPortraitJpg, width: 800, height: 800, alt: 'Portrait of Andy He' } satisfies Image,
+  /** The About card's figure. */
   portrait: { src: meJpg, width: 800, height: 800, alt: 'Portrait of Andy He' } satisfies Image,
 }
 
