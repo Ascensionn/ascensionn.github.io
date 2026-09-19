@@ -159,7 +159,7 @@ export const heroPhrases: [string, string] = ['Welcome to my website!', 'My name
 
 export const experience: Experience[] = [
   {
-    company: 'Scriber by Notum',
+    company: 'Scriber Technologies',
     summary: 'Creating and designing a tool to help students transcribe and translate lectures, and take notes.',
     logo: { src: scriberPng, width: 1024, height: 1024, alt: 'Scriber logo' },
     // Two overlapping speech bubbles on white; both belong to the mark.
