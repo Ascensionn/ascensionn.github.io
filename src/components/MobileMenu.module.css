@@ -7,14 +7,23 @@
   color: var(--ink);
   opacity: 0;
   visibility: hidden;
+  /* `visibility` steps, it does not fade: held until the fade-out has finished, so the panel
+     stays hit-testable and out of the tab order at the right moments. Closing is what wants
+     the delay; opening must not have it. A single `visibility 0.35s` on both looks equivalent
+     and is not — at progress 0 the computed value is still `hidden`, and focus() on a hidden
+     element is a no-op, so the dialog opened with focus stranded on <body> outside it while
+     the rest of the page was inert (build/fx-menu.mjs). */
   transition:
     opacity 0.35s var(--ease-out),
-    visibility 0.35s;
+    visibility 0s linear 0.35s;
 }
 
 .overlay[data-open] {
   opacity: 1;
   visibility: visible;
+  transition:
+    opacity 0.35s var(--ease-out),
+    visibility 0s;
 }
 
 /* The panel sits exactly where the hero card sits, so Menu/Close feel like one control. */

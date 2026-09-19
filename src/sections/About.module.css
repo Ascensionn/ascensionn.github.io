@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------ the statement
-   "Hello! I am a / <WORD>, / passionate about Big Data." The word is the focal element and
-   changes every two seconds; the type it is set in changes continuously (TypeCycle). Nothing
-   here declares a colour — the block is ink on the card in both themes, with no inversion.
+   "Hello! I am a / <WORD>". The word is the focal element and changes every two seconds; the
+   type it is set in changes continuously (TypeCycle). Nothing here declares a colour — the
+   block is ink on the card in both themes, with no inversion.
 
    ONE SIZE FOR EVERY WORD. The slot is sized so the longest entry in content.roles sets to the
    card's measure, and every other word is set at that same size — "Builder" then takes 38% of
@@ -10,27 +10,19 @@
    times every eight seconds and reads as a zoom rather than as a sentence.
 
    The divisor is that longest word's ink width in em, measured in the browser by
-   build/about-fit.mjs: "Software Engineer," — with the comma the layout adds, which is part of
-   the set width — is 8.488em of Geist 800 at this tracking. 8.74 is that plus 3% of slack, which
-   keeps the word off the card's edge and covers a first paint where Geist has not arrived and a
-   fallback is setting the line. It holds at every width: the statement is one line at all of
-   them, so unlike the closing panel there is no second, narrower measure to keep in step.
-   Add a longer word to content.roles and this is the one number that has to move. */
+   build/about-fit.mjs: "Software Engineer," was 8.488em of Geist 800 at this tracking, measured
+   back when a comma travelled with the word. 8.74 is that plus 3% of slack, which keeps the word
+   off the card's edge and covers a first paint where Geist has not arrived and a fallback is
+   setting the line; without the comma there is simply more of it. It holds at every width: the
+   statement is one line at all of them, so unlike the closing panel there is no second, narrower
+   measure to keep in step. Add a longer word to content.roles and this is the one number that
+   has to move. */
 .statement {
   margin-top: clamp(56px, 11cqi, 220px);
   font-size: calc(100cqi / 8.74);
-  /* The quiet lines, in em of the word. Smaller than the closing panel's 0.36 because this
-     block has two of them, above and below, and at 0.36 the three lines read as one paragraph
-     of near-equal weight rather than as a word with a sentence wrapped round it. */
+  /* The greeting above the word, in em of it. Smaller than the closing panel's 0.36 so the line
+     reads as the quiet half of the statement rather than as a second line of near-equal weight. */
   --mark-quiet: 0.3;
-}
-
-/* The alternative layout (About.tsx, STATEMENT_LAYOUT = 'supporting'): the Big Data line drops
-   out of the sentence and becomes a smaller note set apart from it. Both numbers are in em of
-   the word, and TypeCycle.module.css is where they are read. */
-.supporting {
-  --mark-tail: 0.21;
-  --mark-tail-gap: 0.42;
 }
 
 .body {

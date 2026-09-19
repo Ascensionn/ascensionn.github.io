@@ -1583,20 +1583,90 @@ export function mount(container: HTMLElement, options: AsciiLogoOptions): AsciiL
     pre.textContent = JSON.stringify(all)
   }
 
-  /* ---- boot ---------------------------------------------------------- */
-  getMark(options.src, shape, part)
-    .then((m) => {
-      if (destroyed) return
-      mark = m
-      boot()
-    })
-    .catch(() => {
-      if (destroyed) return
-      /* Nothing to draw beats throwing or leaving a half-built canvas. */
-      failed = true
-      mark = null
-      boot()
-    })
+  /* ---- boot ----------------------------------------------------------
+   *
+   * The artwork is never displayed: it is read once through getImageData to build a
+   * coverage mask, and the Experience card sits a couple of thousand pixels below the
+   * fold. Fetching all four files at mount took bandwidth from the hero portrait, which
+   * is the page's LCP element — measured at 150ms/1.6Mbps the portrait finished 1.1s
+   * later with them in flight than with them blocked (build/fx-contend.mjs).
+   *
+   * So the fetch waits until the mark is within a screen of the viewport, which is early
+   * enough that the mask is built before the row is read. A capture or a bench run loads
+   * at once: ?logo_t / ?hero_t hold the screenshot gate open until the mask lands, and a
+   * mark that never intersects would hold it open forever. So does a browser with no
+   * IntersectionObserver, which has no "near" to wait for.
+   *
+   * The viewport gate is an optimisation, never a correctness dependency: `armFallback`
+   * fetches anyway once the page has loaded and gone quiet. Without it anything that never
+   * scrolls — a full-page screenshot, which expands the capture rather than the viewport —
+   * rendered four empty boxes where the marks should be.
+   */
+  let nearIo: IntersectionObserver | null = null
+  let fallbackTimer = 0
+  let fetched = false
+
+  function loadMark(): void {
+    if (fetched || destroyed) return
+    fetched = true
+    nearIo?.disconnect()
+    nearIo = null
+    window.clearTimeout(fallbackTimer)
+    fallbackTimer = 0
+    getMark(options.src, shape, part)
+      .then((m) => {
+        if (destroyed) return
+        mark = m
+        boot()
+      })
+      .catch(() => {
+        if (destroyed) return
+        /* Nothing to draw beats throwing or leaving a half-built canvas. */
+        failed = true
+        mark = null
+        boot()
+      })
+  }
+
+  /** Ceiling on the safety net, so an image that is never reached cannot strand a mark unbuilt. */
+  const FALLBACK_CEILING = 8000
+
+  /**
+   * Waits for the page's own <img> elements to finish, then fetches anyway.
+   *
+   * Not the `load` event, which fires before React has even inserted the two portraits and so
+   * gates nothing (measured: load at 880ms, the hero portrait's request started at 911ms). The
+   * images on the page ARE what this must not compete with, so they are what it waits for.
+   */
+  function armFallback(): void {
+    fallbackTimer = window.setTimeout(loadMark, FALLBACK_CEILING)
+    const pending = Array.from(document.images).filter((im) => !im.complete)
+    let left = pending.length
+    if (left === 0) {
+      loadMark()
+      return
+    }
+    const settled = () => {
+      if (--left === 0) loadMark()
+    }
+    for (const im of pending) {
+      im.addEventListener('load', settled, { once: true })
+      im.addEventListener('error', settled, { once: true })
+    }
+  }
+
+  if (capture || typeof IntersectionObserver === 'undefined') {
+    loadMark()
+  } else {
+    nearIo = new IntersectionObserver(
+      (entries) => {
+        if (entries[entries.length - 1].isIntersecting) loadMark()
+      },
+      { rootMargin: '100% 0px' },
+    )
+    nearIo.observe(container)
+    armFallback()
+  }
 
   function boot(): void {
     rebuild()
@@ -1667,6 +1737,8 @@ export function mount(container: HTMLElement, options: AsciiLogoOptions): AsciiL
       stop()
       ro?.disconnect()
       io?.disconnect()
+      nearIo?.disconnect()
+      window.clearTimeout(fallbackTimer)
       mo?.disconnect()
       mq?.removeEventListener('change', onMotionPreference)
       document.removeEventListener('visibilitychange', onVisibility)

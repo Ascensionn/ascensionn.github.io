@@ -57,9 +57,8 @@ export type AsciiHeroOptions = {
   fillThreshold?: number
   inkThreshold?: number
   /**
-   * Keeps the top of the card clear of pattern glyphs, in CSS px, so the nav row
-   * reads as a row of buttons rather than more texture. The field fades back in
-   * over the next 70%. 0 (the default) draws the field full-bleed.
+   * Fallback height of the top furniture band, in CSS px, used until the host
+   * measures its own nav row (see `--ascii-nav-clear` below). 0 draws full-bleed.
    */
   navClearPx?: number
 }
@@ -487,7 +486,22 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
   const reduced =
     opt.reducedMotion != null ? !!opt.reducedMotion : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const interactive = opt.interactive !== false
-  const navClearPx = opt.navClearPx == null ? CONFIG.navClearPx : opt.navClearPx
+  /* ---------- the two furniture bands ----------
+     The card is not all canvas: a row of nav capsules sits across the top and the caption
+     chips plus the progress rule sit across the bottom, and BOTH are opaque controls that
+     have to read as controls. Art that runs into them reads as a rendering fault — the
+     characters end up clipped by a pill's outline and the hairline rule disappears into the
+     pattern altogether.
+
+     These are the heights of those two bands, in CSS px from the card's edges. They are
+     defaults: the host measures its own rows and publishes them as --ascii-nav-clear and
+     --ascii-foot-clear (see readClearance and src/sections/Hero.tsx), because the caption row
+     WRAPS — one line of capsules at 1440, three at 390 — so a constant is wrong by ~80px on a
+     phone. Every band-aware piece of the renderer reads these two: the pattern's dither, the
+     loose grains' guard, and the phrase's own bottom limit. */
+  const navClearFallback = opt.navClearPx == null ? CONFIG.navClearPx : opt.navClearPx
+  let navClearPx = navClearFallback
+  let footClearPx = CONFIG.phrase.footPx
 
   const FILL_CH = opt.fillChar ? String(opt.fillChar).charAt(0) : PH.fillChar
   const EDGE: EdgeGlyphs = opt.edgeGlyphs || PH.edge
@@ -604,6 +618,8 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
   let gridY0 = 0
   let aspect = 1.6
   let navRows = 3
+  /** Per-row guard against the nav and caption bands; see buildGuard(). */
+  let rowKeep = new Float32Array(0)
   let colPx = new Int32Array(0) // integer device-pixel origins
   let rowPx = new Int32Array(0)
   let ink = '#151515'
@@ -623,12 +639,65 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
 
   let ready = false
   let destroyed = false
+  /**
+   * A Skip pressed before the engine existed, banked until it does.
+   *
+   * The control is on the card from first paint, but nothing here can act until BOOT's
+   * loadFonts() resolves — up to its own 2.5s timeout on a cold connection. Dropping the
+   * click on the floor left the host showing "Replay" and a full progress rule over an
+   * intro that then played all thirteen seconds from zero, so the button lied and the
+   * next press replayed instead of finishing. Honoured once at the end of buildAll().
+   */
+  let pendingSkip = false
   const measureCtx = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D
 
   function readInk(): void {
     const cs = window.getComputedStyle(container)
     const v = (cs.getPropertyValue('--ascii-ink') || '').trim()
     ink = v || cs.color || '#151515'
+  }
+
+  /**
+   * The host's measured furniture bands, read the same way the ink colour is: off the
+   * container's own computed style, so nothing has to be threaded through the options and a
+   * re-measure costs a custom property write rather than a remount. Both are inherited
+   * properties, so the host can set them on the card and the canvas's box will see them.
+   *
+   * Anything missing or unparseable simply leaves the fallback standing, which is what a
+   * consumer that mounts the engine on a bare div gets.
+   */
+  function readClearance(): void {
+    const cs = window.getComputedStyle(container)
+    const read = (name: string, fallback: number): number => {
+      const v = parseFloat(cs.getPropertyValue(name))
+      return isFinite(v) && v >= 0 && v < H * 0.45 ? v : fallback
+    }
+    navClearPx = read('--ascii-nav-clear', navClearFallback)
+    footClearPx = read('--ascii-foot-clear', PH.footPx)
+  }
+
+  /**
+   * Per-row opacity for everything that is NOT a seated phrase glyph: 0 over each furniture
+   * band, ramping to full over ~1.6 character rows inside it.
+   *
+   * A ramp rather than a cut because the grains are in flight — a hard line across the card
+   * that debris vanishes at is its own artefact. 1.6 rows is the narrowest ramp that still
+   * reads as a fade at the grid's own resolution rather than as a second hard edge.
+   *
+   * The ramp is allowed to reach a little way inside the phrase's own box at the bottom,
+   * which is why the seated wordmark does not go through it at all (see plotSoft): the
+   * phrase keeps every pixel of its measure, and only the swarm around it thins out.
+   */
+  function buildGuard(): void {
+    if (rowKeep.length !== rows) rowKeep = new Float32Array(rows)
+    const ramp = Math.max(6, cellH * 1.6)
+    const bot = H - footClearPx
+    for (let r = 0; r < rows; r++) {
+      const y = cellY(r)
+      const up = navClearPx > 0 ? smoothstep(navClearPx, navClearPx + ramp, y) : 1
+      const down = footClearPx > 0 ? smoothstep(bot, bot - ramp, y) : 1
+      rowKeep[r] = up < down ? up : down
+    }
   }
 
   function measureAdvance(): void {
@@ -654,7 +723,8 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
     gridX0 = (W - cols * cellW) * 0.5
     gridY0 = (H - rows * cellH) * 0.5
     aspect = cellH / cellW
-    navRows = Math.max(2, Math.ceil(PH.navPx / cellH))
+    readClearance()
+    navRows = Math.max(2, Math.ceil(Math.max(PH.navPx, navClearPx) / cellH))
     const wd = Math.round(W * dpr)
     const hd = Math.round(H * dpr)
     if (canvas.width !== wd) canvas.width = wd
@@ -663,6 +733,7 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
     rowPx = new Int32Array(rows)
     for (let c = 0; c < cols; c++) colPx[c] = Math.round((gridX0 + c * cellW) * dpr)
     for (let r = 0; r < rows; r++) rowPx[r] = Math.round((gridY0 + r * cellH) * dpr)
+    buildGuard()
   }
   function cellX(c: number): number {
     return gridX0 + (c + 0.5) * cellW
@@ -761,6 +832,27 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
     drawCell(g, band, ai, c, r)
   }
 
+  /**
+   * plot(), for a grain that is not part of the settled wordmark: loose material, debris in
+   * flight, and the motion trails behind it. It fades out across the nav and caption bands
+   * (see buildGuard) instead of being drawn over the furniture.
+   *
+   * Seated glyphs — the assembled phrase — go through plot() directly and are exempt, which
+   * is what lets the wordmark use every pixel of its own box right down to the band's edge
+   * while the swarm around it thins out before it reaches the chips.
+   */
+  function plotSoft(g: number, band: number, ai: number, x: number, y: number): void {
+    const r = Math.floor((y - gridY0) / cellH)
+    if (r < 0 || r >= rows) return
+    const keep = rowKeep[r]
+    if (keep <= 0) return
+    if (keep < 1) {
+      ai = alphaIdx(ALPHAS[ai] * keep)
+      if (ai < 0) return
+    }
+    plot(g, band, ai, x, y)
+  }
+
   /* ====================================================================
    * PHRASE LAYOUT & RASTERISATION
    * ==================================================================== */
@@ -776,8 +868,21 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
 
     const padXpx = Math.max(cellW * 3, W * PH.padXFrac)
     const topY = gridY0 + navRows * cellH + cellH * 0.6
-    // Whichever is higher: the grid's own bottom margin, or the caption row's real band.
-    const botY = Math.min(gridY0 + (rows - PH.bottomRows) * cellH, H - PH.footPx)
+    /* Whichever is higher: the grid's own bottom margin, or the caption row's real band —
+       `footClearPx`, which the host measures, rather than PH.footPx's guess of one line of
+       capsules. The row wraps to three lines on a phone, and the constant put the phrase's
+       box 77px INSIDE it there; the phrase never reached that far (it is width-bound at
+       those sizes) but it was centred in a box that overlapped the chips, which left it
+       sitting lower than the identity block it cross-dissolves into.
+
+       `max`, and no extra margin on top of it: PH.footPx is already the floor the desktop
+       composition was tuned against, and the line-split scorer sits on a knife edge at
+       1440x900 — trimming even 10px here flipped "Welcome / to my / website!" to "Welcome to
+       / my website!" and took 14% off the cap height. So this only ever LOWERS the box where
+       the real caption row is taller than the constant, which is every phone. The guard's
+       ramp is allowed to overlap the last few px of this box: seated glyphs do not go through
+       it (see plotSoft), so only loose grains ever fade there. */
+    const botY = Math.min(gridY0 + (rows - PH.bottomRows) * cellH, H - Math.max(PH.footPx, footClearPx))
     const availW = Math.max(10, W - padXpx * 2)
     const availH = Math.max(10, botY - topY)
     const LEAD = PH.leadEm * 100
@@ -1100,18 +1205,14 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
   }
 
   function renderPattern(t: number): void {
-    const clearTo = navClearPx
-    const fadeTo = clearTo * 1.7
     for (let r = 0; r < rows; r++) {
-      /* Optional clear band under the nav row: the field is cut away over the
-         top `navClearPx`, then dithered back to full over the next 70%, so the
-         nav's buttons sit on the card rather than on a dense character field. */
-      let keep = 1
-      if (clearTo > 0) {
-        const y = cellY(r)
-        if (y < clearTo) continue
-        keep = smoothstep(clearTo, fadeTo, y)
-      }
+      /* Clear bands under the nav row and over the caption row: the field is cut away
+         across each band and dithered back to full just inside it, so both rows of
+         capsules sit on the card rather than on a dense character field. The bottom band
+         used to be missing entirely, which left the progress rule drawn straight through
+         the pattern and the chips' outlines clipping characters. */
+      const keep = rowKeep[r]
+      if (keep <= 0) continue
       patternRow(r, t)
       for (let c = 0; c < cols; c++) {
         const g = rowBuf[c]
@@ -1807,7 +1908,9 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
         }
       }
       ai = alphaIdx(a)
-      if (ai >= 0) plot(g, BAND_INK, ai, x, y)
+      // Seated glyphs are the wordmark and own their cells outright; grains still in flight
+      // fade out across the nav and caption bands rather than crossing the furniture.
+      if (ai >= 0) (m === M_SET ? plot : plotSoft)(g, BAND_INK, ai, x, y)
     }
 
     // pass 2 — loose material: still on the grid, falling, or leaving
@@ -1831,7 +1934,7 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
         g = chaosAt(i, tb2, 157)
       }
       ai = alphaIdx(a)
-      if (ai >= 0) plot(g, BAND_INK, ai, x, y)
+      if (ai >= 0) plotSoft(g, BAND_INK, ai, x, y)
     }
 
     // pass 3 — direction-aware motion trails behind the fast movers
@@ -1845,8 +1948,8 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
         const uy = pvy[i]
         if (ux * ux + uy * uy < fast2 || hash3(i, 0, 167) >= FX.streakFrac) continue
         const g1 = (ux < 0 ? -ux : ux) > (uy < 0 ? -uy : uy) ? SH_ID[0] : SV_ID[0]
-        if (aNear >= 0) plot(g1, BAND_INK, aNear, px[i] - ux * 0.03, py[i] - uy * 0.03)
-        if (aFar >= 0) plot(TRAIL_FAR, BAND_INK, aFar, px[i] - ux * 0.068, py[i] - uy * 0.068)
+        if (aNear >= 0) plotSoft(g1, BAND_INK, aNear, px[i] - ux * 0.03, py[i] - uy * 0.03)
+        if (aFar >= 0) plotSoft(TRAIL_FAR, BAND_INK, aFar, px[i] - ux * 0.068, py[i] - uy * 0.068)
       }
     }
   }
@@ -2272,7 +2375,13 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
 
   const api: AsciiHeroInstance = {
     replay() {
-      if (!ready) return
+      // Replay before the engine is ready cancels a banked Skip rather than queueing behind it:
+      // pressing Skip and then Replay in that window asks for the intro from the top, which is
+      // what an engine that has not started yet is already about to do.
+      if (!ready) {
+        pendingSkip = false
+        return
+      }
       frozen = false
       playing = true
       everDone = false
@@ -2289,7 +2398,10 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
       start()
     },
     skip() {
-      if (!ready) return
+      if (!ready) {
+        pendingSkip = true
+        return
+      }
       if (reduced) {
         settleFinal()
         render(simT)
@@ -2431,6 +2543,13 @@ export function mount(container: HTMLElement, options: AsciiHeroOptions = {}): A
     }
     if (seekParam != null && isFinite(seekParam)) {
       api.seek(seekParam)
+      return
+    }
+    // A Skip pressed while the fonts were still loading. Honoured instead of the first frame,
+    // never on top of it, so the intro is not started only to be jumped out of.
+    if (pendingSkip) {
+      pendingSkip = false
+      api.skip()
       return
     }
     render(simT)

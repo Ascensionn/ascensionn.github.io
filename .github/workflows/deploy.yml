@@ -12,7 +12,10 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Queued runs are still coalesced by the group; only the in-flight deployment is allowed to
+  # finish. Cancelling one mid-flight can leave the Pages deployment pending and fail the run
+  # behind it, which is why GitHub's own Pages workflow ships with this set to false.
+  cancel-in-progress: false
 
 jobs:
   build:

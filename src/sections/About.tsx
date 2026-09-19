@@ -7,29 +7,6 @@ import { belowFold } from '../components/imageLoading'
 import { education, person, restingRole, roles, statement } from '../content'
 import styles from './About.module.css'
 
-/* ------------------------------------------------------------------ the statement's layout
- *
- *  ===> ONE WORD TO EDIT, if the other version reads better to you. <===
- *
- * Both were built and shot side by side (shots-about/a-about-*.png against b-about-*.png):
- *
- *  'inline'     Hello! I am a / SOFTWARE ENGINEER, / passionate about Big Data.
- *               One sentence broken over three lines, the two quiet halves set at the same size
- *               above and below the word. This is the one that shipped: the comma rides with the
- *               word, so the sentence stays a sentence while the word changes underneath it, and
- *               the quiet lines bracket the big one instead of hanging off it.
- *
- *  'supporting' Hello! I am a / SOFTWARE ENGINEER
- *                                                  passionate about Big Data.
- *               The greeting and the word are the statement; his Big Data line drops away as a
- *               smaller, quieter note with air above it. It reads well at 1440, where there is
- *               room for the gap to mean something. It falls apart on a phone: both quiet lines
- *               are already on their 14px floor there, so the note ends up the SAME SIZE as the
- *               greeting and the only thing distinguishing it is a gap, which just reads as a
- *               hole in the card. And with no comma the word is left with nothing closing it.
- */
-const STATEMENT_LAYOUT: 'inline' | 'supporting' = 'inline'
-
 export function About() {
   const facts = [
     { term: 'Name', detail: person.name },
@@ -62,13 +39,11 @@ export function About() {
       <SectionHead index={1} title="About" headingId="about-title" meta="Profile" />
 
       {/* The rotating word used to be the closing panel's whole idea; it lives here now, in the
-          sentence it belongs to. The panel keeps the type-cycling and sets his name instead. */}
-      <TypeCycle
-        words={roles}
-        resting={restingRole}
-        lead={statement.lead}
-        className={[styles.statement, STATEMENT_LAYOUT === 'supporting' ? styles.supporting : null].filter(Boolean).join(' ')}
-      />
+          sentence it belongs to. The panel keeps the type-cycling and sets his name instead.
+          Two lines, not three: the greeting and the word. The Big Data half of his tagline is
+          printed whole by the hero and the phone menu, and the owner asked for this block to
+          stop at the word. */}
+      <TypeCycle words={roles} resting={restingRole} lead={statement.lead} className={styles.statement} />
 
       <div className={styles.body}>
         <Reveal as="figure" className={styles.portrait}>

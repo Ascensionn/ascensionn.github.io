@@ -74,9 +74,17 @@
 .logo {
   position: relative;
   flex: none;
-  /* The floor is what a 320px card can spare beside a long company name: any wider and
-     "HERE Technologies" pushes past the card's content edge. */
-  width: clamp(92px, 12.2cqi, 176px);
+  /* 92px is what the mark wants beside a company name, and 12.2cqi is what it grows to once
+     the card is wide enough to give it more.
+
+     The floor tapers, because a flat one was 11px too generous at the bottom of the range: the
+     mark held 92px while the text column shrank with the card, so on a 320px screen the "s" of
+     "HERE Technologies" sat in the card's own padding, against the rounded edge (measured with
+     build/qhere.mjs: +11px past the content edge at 320, and only -1px of slack left at 390).
+     `min()` gives that width back in proportion instead of stepping at a breakpoint, and 25cqi
+     reaches 92px at a 368px card — so every card at or above ~388px of viewport is untouched
+     and only the narrowest phones trade a little mark for a name that stays inside the card. */
+  width: clamp(min(92px, 25cqi), 12.2cqi, 176px);
   aspect-ratio: 1;
   /* The engine bakes its glyph atlas in this colour. Fixed to the resting ink rather
      than currentColor, because the row's own colour animates and the atlas is not
@@ -101,6 +109,13 @@
   color: var(--muted);
   font-size: clamp(15px, 1.2cqi, 22px);
   line-height: 1.45;
+  /* Four fixed sentences in a column that changes width continuously, so at some widths the
+     last one of them ends on a single word: "notes." alone under two full lines at 1100 and
+     320, "spatial data." at 430, "model training." at 360 and 1366 (build/qwidths.mjs finds
+     them). A short last line in a three-line note reads as a mistake beside the row above it
+     that fills its measure. `pretty` lets the browser pull a word down to avoid it; where it
+     is not supported the wrap is exactly what it is today. */
+  text-wrap: pretty;
   transition: color 0.35s var(--ease-out);
 }
 

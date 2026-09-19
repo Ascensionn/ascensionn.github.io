@@ -47,8 +47,15 @@ function resolveSeconds(): number {
  * and the pauses the engine takes while it is off screen. Polling at 80ms is far cheaper than
  * a second rAF loop and is twenty times finer than the beat it is looking for; React drops the
  * update whenever the boolean has not actually changed.
+ *
+ * The poll stops the moment the clock passes the engine's own last beat, because from there it
+ * can only be moved by Skip or Replay — and both of those change `introDone`, which re-arms it.
+ * Left running it was the last timer awake on a settled page, firing 12.5 times a second for
+ * as long as the tab stayed open with nothing left to observe.
+ *
+ * @param introDone The host's Skip/Replay state, which is what re-arms the poll.
  */
-export function useHeroResolve(engine: AsciiHeroInstance | null): boolean {
+export function useHeroResolve(engine: AsciiHeroInstance | null, introDone: boolean): boolean {
   const [resolved, setResolved] = useState(() => {
     const seek = frozenAt()
     // Start in the right state so a static capture never shoots a half-built frame.
@@ -58,17 +65,32 @@ export function useHeroResolve(engine: AsciiHeroInstance | null): boolean {
   useEffect(() => {
     if (!engine) return
     const at = resolveSeconds()
+    let id = 0
+    let settled = false
     const read = () => {
+      let t: number
       try {
-        setResolved(engine.stats().t >= at)
+        t = engine.stats().t
       } catch {
         /* an engine build without timing simply leaves the hero where it was */
+        return
+      }
+      setResolved(t >= at)
+      // Past the engine's last beat there is nothing left to watch; Hero parks the loop here too.
+      if (t < HERO_TIMELINE.idle) return
+      settled = true
+      if (id) {
+        window.clearInterval(id)
+        id = 0
       }
     }
     read()
-    const id = window.setInterval(read, 80)
-    return () => window.clearInterval(id)
-  }, [engine])
+    // A seeked engine (?hero_t) is frozen on one frame, so its clock cannot move either.
+    if (!settled && frozenAt() == null) id = window.setInterval(read, 80)
+    return () => {
+      if (id) window.clearInterval(id)
+    }
+  }, [engine, introDone])
 
   return resolved
 }

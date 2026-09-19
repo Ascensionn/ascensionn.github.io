@@ -49,6 +49,8 @@ export function MobileMenu({ open, onClose, intro, theme, onToggleTheme }: Props
 
     const dialog = dialogRef.current
     const focusables = () => Array.from(dialog?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])
+    // Lands in this tick only because the overlay's `visibility` steps rather than transitions;
+    // see the note on .overlay in MobileMenu.module.css.
     ;(dialog?.querySelector<HTMLElement>('[data-autofocus]') ?? focusables()[0])?.focus()
 
     const onKeyDown = (event: KeyboardEvent) => {

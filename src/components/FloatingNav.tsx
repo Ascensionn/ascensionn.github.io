@@ -48,9 +48,9 @@ type State = { shown: boolean; current: string }
  * scroll up, and stands down again a few seconds after you settle. So nothing you are reading ever
  * stays underneath it: hold still and the page is yours, flick up and the route is back.
  *
- * It also holds its ground while it is hovered or while focus is inside it, which is what keeps it
- * from vanishing out from under a pointer on its way to a link, or from taking the keyboard focus
- * with it. (`inert` while hidden would do exactly that.)
+ * It also holds its ground while it is hovered — so it never retires out from under a pointer on
+ * its way to a link — and while keyboard focus is inside it, where hiding would take the focus
+ * with it: `inert` on the wrapper blurs whatever is focused in there.
  *
  * Everything is measured from the scroll offset in one rAF-throttled pass rather than from
  * IntersectionObservers: observers are re-evaluated against an expanded viewport while a full-page
@@ -58,6 +58,8 @@ type State = { shown: boolean; current: string }
  */
 export function FloatingNav({ heroRef, footerRef, theme, onToggleTheme, menuOpen, onOpenMenu }: Props) {
   const [{ shown, current }, setState] = useState<State>({ shown: false, current: sections[0].id })
+  /** The wrapper `inert` is applied to, so `measure()` can tell whether the keyboard is inside it. */
+  const wrapRef = useRef<HTMLDivElement>(null)
   /** Pointer over the bar, or focus inside it: either way it must not retire under them. */
   const held = useRef(false)
   /** Set by the effect below, so the pointer/focus handlers can restart the rest timer. */
@@ -114,8 +116,17 @@ export function FloatingNav({ heroRef, footerRef, theme, onToggleTheme, menuOpen
         if (el && el.offsetTop <= middle) id = section.id
       }
 
+      /* Keyboard focus inside the bar vetoes every reason to hide it.
+         Hiding applies `inert` to the wrapper the focused element lives in, and Chrome blurs
+         it: a visitor who tabbed into the bar and then scrolled the way keyboard users do —
+         arrow keys, Page Down, space — had focus dropped onto <body>, so the next Tab
+         restarted the tab order at "Skip to content", throwing them back to the top of the
+         document. Read from the DOM rather than from `held`, which is also set by the pointer:
+         a mouse visitor's bar still yields over the footer the way it always has. */
+      const keyboardInside = !!wrapRef.current && wrapRef.current.contains(document.activeElement)
+
       setState((prev) => {
-        const next = { shown: scrollable && pastHero && !atFooter && !reading && !resting, current: id }
+        const next = { shown: (scrollable && pastHero && !atFooter && !reading && !resting) || keyboardInside, current: id }
         return prev.shown === next.shown && prev.current === next.current ? prev : next
       })
     }
@@ -169,7 +180,7 @@ export function FloatingNav({ heroRef, footerRef, theme, onToggleTheme, menuOpen
   }
 
   return (
-    <div className={styles.wrap} data-shown={shown || undefined} inert={!shown}>
+    <div ref={wrapRef} className={styles.wrap} data-shown={shown || undefined} inert={!shown}>
       <nav
         className={`label ${styles.bar}`}
         aria-label="Sections"

@@ -27,7 +27,11 @@
      Nothing else may use it — it is a signature, and a second appearance would make it
      a theme. See index.html for the single <link> that loads it. */
   --vandal: 'Permanent Marker', 'Bradley Hand', cursive;
-  --label-size: clamp(11px, 0.66vw, 13px);
+  /* In rem, not px, so the floor — which is what ships at every realistic width, since 0.66vw
+     only reaches 11px at a 1667px window — follows a raised browser default font size instead
+     of pinning every label on the site at 11px for a visitor who has set one. 0.6875rem and
+     0.8125rem are the same 11px and 13px at the default root size. */
+  --label-size: clamp(0.6875rem, 0.66vw, 0.8125rem);
   --label-tracking: 0.045em;
 
   /* motion */
@@ -81,7 +85,10 @@ body {
   background: var(--outer);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 16px;
+  /* Not an absolute 16px: that overrode the default font size a low-vision visitor had set in
+     the browser, which is the accommodation people configure once and forget. 100% IS 16px
+     wherever that default has been left alone. */
+  font-size: 100%;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

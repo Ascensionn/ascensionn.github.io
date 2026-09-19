@@ -8,8 +8,8 @@ import styles from './TypeCycle.module.css'
 /**
  * The one type-cycling block on the site. Two callers, one implementation:
  *
- *  - About sets the statement "Hello! I am a <WORD>, passionate about Big Data.", where the word
- *    is the big thing and changes every two seconds (src/content.ts `roles`).
+ *  - About sets the statement "Hello! I am a <WORD>", where the word is the big thing and
+ *    changes every two seconds (src/content.ts `roles`).
  *  - The closing panel sets one fixed word — the "Andy He" wordmark — which never changes.
  *
  * What moves is TYPE, and only type. The word is auditioned continuously: a new face every third
@@ -85,8 +85,6 @@ const MARK_VARS = ['family', 'weight', 'style', 'track', 'fit', 'top', 'left', '
 type Options = {
   /** The rotation, in order. Identity must be stable — pass a module constant. */
   words: readonly string[]
-  /** Set inside the slot after the word, so it travels with it (About's comma). */
-  suffix: string
   /** The word the block rests on, and where the loop starts. */
   start: number
   /** False pins the specimen at its fitted size and auditions the face alone. */
@@ -105,7 +103,7 @@ function other(length: number, current: number): number {
 }
 
 /** Returns the index of the word the block should be showing. */
-function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, start, sizing, skip, loop }: Options): number {
+function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, start, sizing, skip, loop }: Options): number {
   const [index, setIndex] = useState(start)
   // The effect drives the rotation on timers and must not be torn down and rebuilt on every
   // tick, so its own cursor lives in a ref and the state is only what React renders from.
@@ -194,7 +192,7 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
       const next = (cursor.current + 1) % words.length
       cursor.current = next
       flushSync(() => setIndex(next))
-      const spec = fitWord(words[next] + suffix)
+      const spec = fitWord(words[next])
       faces = spec.faces
       mark.style.setProperty('--mark-base', spec.baseline.toFixed(4))
       // Nothing to audition means nothing may keep the previous word's fit either.
@@ -276,7 +274,7 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
     const ready = document.fonts ? document.fonts.ready : Promise.resolve()
     void ready.then(() => {
       if (!alive) return
-      const spec = fitWord(words[cursor.current] + suffix)
+      const spec = fitWord(words[cursor.current])
       faces = spec.faces
       mark.style.setProperty('--mark-base', spec.baseline.toFixed(4))
       run()
@@ -290,7 +288,7 @@ function useTypeCycle(rootRef: RefObject<HTMLElement | null>, { words, suffix, s
       window.clearTimeout(wordTimer)
       clearType()
     }
-  }, [rootRef, words, suffix, sizing, skip, loop])
+  }, [rootRef, words, sizing, skip, loop])
 
   return index
 }
@@ -302,10 +300,6 @@ type Props = {
   resting?: string
   /** Quiet line above the word. The article that fits the current word is appended to it. */
   lead?: string
-  /** Quiet line below the word, closing the sentence. */
-  tail?: string
-  /** Punctuation set immediately after the word, inside the slot, so it moves with it. */
-  suffix?: string
   /**
    * On a card narrower than 520px, set each token of the word on its own line in a box that is
    * always two lines tall — bigger type, at the cost of a line that a single-token word leaves
@@ -325,14 +319,14 @@ type Props = {
   className?: string
 }
 
-export function TypeCycle({ words, resting, lead, tail, suffix = '', stack, size = 'audition', className }: Props) {
+export function TypeCycle({ words, resting, lead, stack, size = 'audition', className }: Props) {
   const rootRef = useRef<HTMLParagraphElement>(null)
   const still = useStillMode()
   const start = Math.max(0, resting ? words.indexOf(resting) : 0)
-  const index = useTypeCycle(rootRef, { words, suffix, start, sizing: size === 'audition', skip: still, loop: MARK_LOOP })
+  const index = useTypeCycle(rootRef, { words, start, sizing: size === 'audition', skip: still, loop: MARK_LOOP })
   const word = words[index]
 
-  /* The word and its punctuation are ONE text node, with spaces written as newlines.
+  /* The word is ONE text node, with its spaces written as newlines.
 
      Phones set a two-word role one word per line, and that break has to be authored rather than
      discovered: every face is fitted to its own width, so a condensed one can hold on a single
@@ -348,14 +342,14 @@ export function TypeCycle({ words, resting, lead, tail, suffix = '', stack, size
      against 0.0005 for the same run with the tokens merged into one node. A single text node
      whose left edge never moves and whose width merely changes is not an unstable element at
      all, so the browser has nothing to score. */
-  const setting = (word + suffix).replace(/ /g, '\n')
+  const setting = word.replace(/ /g, '\n')
 
   return (
-    /* Deliberately NOT a live region. At any moment this paragraph reads as one whole sentence —
-       "Hello! I am a Software Engineer, passionate about Big Data." — which is what a screen
-       reader should get, and announcing a new word every two seconds would be the same sentence
-       turned into an interruption. It is real, selectable, findable text throughout: the effect
-       is a font swap, never a canvas and never an image. */
+    /* Deliberately NOT a live region. At any moment this paragraph reads as one whole line —
+       "Hello! I am a Software Engineer" — which is what a screen reader should get, and
+       announcing a new word every two seconds would be that line turned into an interruption.
+       It is real, selectable, findable text throughout: the effect is a font swap, never a
+       canvas and never an image. */
     <p ref={rootRef} className={[styles.mark, stack ? styles.stack : null, className].filter(Boolean).join(' ')}>
       {/* The article belongs to the word that is up, so it is worked out here and not written
           into content.ts: "a Founder", "an Engineer". A block with only one fixed word has no
@@ -368,9 +362,6 @@ export function TypeCycle({ words, resting, lead, tail, suffix = '', stack, size
           <span className={styles.face}>{setting}</span>
         </span>
       </span>
-
-      {tail ? ' ' : null}
-      {tail ? <span className={styles.tail}>{tail}</span> : null}
     </p>
   )
 }

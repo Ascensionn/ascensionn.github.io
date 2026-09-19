@@ -4,7 +4,16 @@
   flex-direction: column;
   justify-content: space-between;
   height: calc(100svh - 2 * var(--inset));
-  min-height: 480px;
+  /* A floor, but never one that overflows the screen it is standing on. 480px is the height
+     below which the card has no room for its own composition; on a landscape phone (844x390,
+     740x360) the window is shorter than that, and a bare `min-height: 480px` pushed the
+     bottom of the card — the plaque's lower frame, "NEW YORK CITY", the caption chips and the
+     Skip control — off the first screen, so the hero opened on a cropped sign. Capping the
+     floor at the space actually available lets the block scale down to fit instead: it is
+     sized from this box (--w in HeroIdentity.module.css reads 197cqb), so the whole
+     composition simply gets smaller and stays whole. No effect at or above ~500px of
+     viewport, which is every other size on this list. */
+  min-height: min(480px, calc(100svh - 2 * var(--inset)));
   padding: var(--hero-pad);
   border-radius: var(--radius);
   background: var(--card);

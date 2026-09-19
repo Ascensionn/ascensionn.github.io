@@ -53,19 +53,17 @@ export const person = {
 }
 
 /**
- * The two fixed halves of the About statement, which reads
+ * The fixed half of the About statement, which reads
  *
  *     Hello! I am
- *     A ROTATING WORD,
- *     passionate about Big Data.
+ *     A ROTATING WORD
  *
  * `lead` has no article on it: "a" or "an" is worked out from whichever word is up (see
- * `article` below), and the comma after the word is set by the component, so that it travels
- * with the word instead of sitting in a gap. Both halves are Andy's own line, split.
+ * `article` below). It stops at the word, with no punctuation closing it — the whole sentence,
+ * Big Data and all, is `person.tagline` above, which the hero and the phone menu print.
  */
 export const statement = {
   lead: 'Hello! I am',
-  tail: 'passionate about Big Data.',
 }
 
 /* ---------------------------------------------------------------- THE ROTATING WORDS

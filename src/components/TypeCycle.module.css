@@ -3,8 +3,8 @@
    About sets the statement with its rotating word, the closing panel sets "Andy He".
 
    NO COLOUR IS DECLARED IN THIS FILE, deliberately. The word is --ink on --card and the quiet
-   lines are --muted, whatever the theme; there is no scheme attribute, no background of its own
-   and nothing for the audition to flip. The closing panel used to redefine the card's tokens
+   line above it is --muted, whatever the theme; there is no scheme attribute, no background of
+   its own and nothing for the audition to flip. The closing panel used to redefine the card's tokens
    four ways on a timer and the owner asked for that to go — it is gone, and there is no rule
    left in here that could bring it back.
 
@@ -38,7 +38,7 @@
 
   /* OPTICAL LEFT EDGE. Not one of the values above: the audition never touches it.
 
-     The quiet lines and the word are one sentence and must hang on one edge, but they are set
+     The quiet line and the word are one sentence and must hang on one edge, but they are set
      ~3x apart in size, and a glyph's left side bearing scales with the type. Flush the two boxes
      and the big line is inset by its own bearing — measured on the running page (build/c4-ink.mjs)
      the word's first ink pixel sat 0.037em of the display size to the right of the "I" in
@@ -53,41 +53,25 @@
      equally and no swap can move it. */
   --mark-hang: 0.037;
 
-  /* The quiet lines, in em of the word. Callers override it; see About.module.css. */
+  /* The quiet line, in em of the word. Callers override it; see About.module.css. */
   --mark-quiet: 0.36;
 }
 
-/* Part of the same sentence, so the same family on the same left edge — quieter only in size,
-   weight and tone. Both sit outside the reserved box, so neither can be moved by a swap.
-
-   A caller that wants the closing line to read as a note rather than as the end of the sentence
-   sets --mark-tail and --mark-tail-gap; About's 'supporting' layout is the one that does. */
-.lead,
-.tail {
+/* Part of the same line as the word, so the same family on the same left edge — quieter only in
+   size, weight and tone. It sits outside the reserved box, so no swap can move it. */
+.lead {
   display: block;
   color: var(--muted);
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.03em;
-}
-
-/* The floor is what keeps these readable on a phone. They are quoted as a fraction of the word
-   so that the sentence holds its proportions as the card grows, but the word itself is sized to
-   the card's measure — so on a 320px card a third of it is 10px, and the two lines that carry
-   the actual sentence would end up smaller than body copy. Below ~47px of display size the
-   fraction stops applying and the quiet lines simply stay at 14px. */
-.lead {
   margin-bottom: 0.06em;
+  /* The floor is what keeps this readable on a phone. The size is quoted as a fraction of the
+     word so that the line holds its proportions as the card grows, but the word itself is sized
+     to the card's measure — so on a 320px card a third of it is 10px, and the line that carries
+     the greeting would end up smaller than body copy. Below ~47px of display size the fraction
+     stops applying and the quiet line simply stays at 14px. */
   font-size: max(14px, calc(var(--mark-quiet) * 1em));
-}
-
-.tail {
-  font-size: max(14px, calc(var(--mark-tail, var(--mark-quiet)) * 1em));
-  /* The gap is quoted in em of the WORD, like every other length in this file — but `em` on this
-     element means its own reduced size, so the quiet factor is divided back out. Writing it in
-     the tail's own em instead would make the gap shrink whenever the note was made smaller,
-     which is the opposite of what a note set apart from a sentence wants. */
-  margin-top: calc(var(--mark-tail-gap, 0.1) / var(--mark-tail, var(--mark-quiet)) * 1em);
 }
 
 /* The reserved box. 0.92em is the height that holds the specimen — the shared baseline lands

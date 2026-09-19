@@ -47,7 +47,15 @@
   display: none;
 }
 
-@media (max-width: 1023.98px) {
+/* The clock is the one item here that can be spared, and it is what the controls need back.
+   Skip/Replay and the theme switch together measure 233px; three columns of the grid only
+   reach that at about a 1045px window, so at 1024 and 1040 the pair wrapped and the whole nav
+   row doubled in height — 62px instead of 28px, with two stacked capsules centred under one
+   another while every other group stayed a single line (build/qnav.mjs prints the widths).
+   Standing the clock down to 1120 keeps a comfortable 15px of slack at the boundary rather
+   than the 7px the measured crossover leaves, and the viewer's time is still in the About
+   table either way. */
+@media (max-width: 1119.98px) {
   .clock {
     display: none;
   }

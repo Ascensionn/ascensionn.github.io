@@ -1,3 +1,4 @@
+import type { Ref } from 'react'
 import type { HeroIntro } from '../hooks/useHeroIntro'
 import type { Theme } from '../hooks/useTheme'
 import { IntroButton, ThemeButton } from './HeroControls'
@@ -6,6 +7,8 @@ import pill from './Pill.module.css'
 import styles from './Nav.module.css'
 
 type Props = {
+  /** The hero measures this row's height to keep the ASCII field clear of it. */
+  ref?: Ref<HTMLElement>
   intro: HeroIntro
   theme: Theme
   onToggleTheme: () => void
@@ -22,9 +25,9 @@ type Props = {
  * takes the outline too but in its static form — no pointer cursor, no inversion — because it
  * is a readout, not something to press.
  */
-export function Nav({ intro, theme, onToggleTheme, menuOpen, onOpenMenu }: Props) {
+export function Nav({ ref, intro, theme, onToggleTheme, menuOpen, onOpenMenu }: Props) {
   return (
-    <nav className={`label ${styles.nav}`} aria-label="Primary">
+    <nav ref={ref} className={`label ${styles.nav}`} aria-label="Primary">
       <a className={`${pill.pill} ${styles.brand}`} href="#top">
         Andy He
       </a>
