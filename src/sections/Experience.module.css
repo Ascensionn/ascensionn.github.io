@@ -162,22 +162,32 @@
 }
 
 /* Every row inverts on hover — the owner wants the same highlight on all four. Only the rows
-   with a .visit link actually go anywhere; the rest simply light up. */
-.row:hover::before {
-  clip-path: inset(0 0 0 0 round 12px);
+   with a .visit link actually go anywhere; the rest simply light up.
+
+   Gated behind (hover: hover): a touch browser keeps :hover asserted after a tap, with nothing
+   to move away to, so on a phone the inversion stayed painted behind the text as a row of black
+   boxes until you tapped something else. Pointer devices get the effect; touch gets the plain
+   card, which is what it should have been reading all along. */
+@media (hover: hover) and (pointer: fine) {
+  .row:hover::before {
+    clip-path: inset(0 0 0 0 round 12px);
+  }
+
+  .row:hover,
+  .row:hover .num {
+    color: var(--card);
+  }
+
+  .row:hover .summary {
+    color: color-mix(in srgb, var(--card) 74%, var(--ink));
+  }
+
+  .row:hover .logo {
+    filter: invert(1);
+  }
 }
 
-.row:hover,
-.row:hover .num {
-  color: var(--card);
-}
-
-.row:hover .summary {
-  color: color-mix(in srgb, var(--card) 74%, var(--ink));
-}
-
-/* The mark rides the inversion. */
-.row:hover .logo,
+/* Keyboard focus still inverts the mark, on any input type. */
 .row:has(.visit:focus-visible) .logo {
   filter: invert(1);
 }
