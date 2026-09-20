@@ -42,8 +42,6 @@ export const person = {
   tagline: 'Hello! I am a Software/Data Engineer, passionate about Big Data.',
   location: 'New York City, USA',
   email: 'itsandy.he2004@gmail.com',
-  phone: '(734) 999-7893',
-  phoneHref: 'tel:+17349997893',
   github: 'https://github.com/Ascensionn',
   linkedin: 'https://www.linkedin.com/in/andy-he-6778241b1/',
   /** The hero's closing beat — the suit photograph, first thing a visitor sees. */

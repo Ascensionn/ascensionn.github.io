@@ -74,14 +74,6 @@ export function Contact() {
       aside: <CopyEmail />,
     },
     {
-      term: 'Phone',
-      detail: (
-        <a className={styles.link} href={person.phoneHref}>
-          <span className={styles.nowrap}>{person.phone}</span>
-        </a>
-      ),
-    },
-    {
       term: 'GitHub',
       detail: (
         <a className={styles.link} href={person.github} target="_blank" rel="noopener noreferrer">
